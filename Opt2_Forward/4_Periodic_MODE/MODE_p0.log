@@ -1,0 +1,121 @@
+Ansys Lumerical 2020 R2 Variational FDTD Solver Version 7.16.2387 (Windows 64bit)
+ expires (month/day/year): 12/31/2035
+using config file: Ansys Licensing set with ANSYSLMD_LICENSE_FILE
+license host: 
+current time: Wed Nov 30 14:43:56 2022
+Running on host: DonHK
+All processes are communicating and ready to proceed to simulation...
+Running lms file: C:\Dev\IDE\SimTool\Lumerical\bin\varfdtd-engine-msmpi.exe -t 1 -remote C:/G_Drive/Projects/DH_K_projects/Opt2_Forward/4_Periodic_MODE/MODE.lms
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+Starting meshing
+Simulation size in gridpoints: 1 x 25 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+number of processors is 16
+processors are distributed as: 4x4x1
+Running TE Simulation
+Starting meshing
+Simulation size in gridpoints: 72 x 42 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0 seconds of CPU time
+0 0
+Starting meshing
+Simulation size in gridpoints: 72 x 42 x 1
+Refined 0 mesh cells (0%)
+Completed meshing!
+Meshing complete in 0.015625 seconds of CPU time
+0 0
+finished material properties
+Selected kernel with optimization level: 0 and split-field propagation direction: 0
+-----------------------------------------
+Beginning initialization of TE Simulation
+Starting to add sources to simulation
+Adding TE Mode Source propagating in X
+Adding TE Mode Source propagating in X
+Adding TE Mode Source propagating in X
+Adding TE Mode Source propagating in X
+Starting to add boundary conditions to simulation
+Adding TE PML BC
+Adding TE parallel BC
+Adding TE PML BC
+Adding TE parallel BC
+Starting to add monitors to Simulation
+Adding analysis monitor
+Adding TE DFT monitor
+Finished initialization of TE Simulation
+-----------------------------------------
+All processes are communicating and ready to proceed to simulation...
+Starting 55140 total iterations
+0% complete. Max time remaining: 1 min, 12 secs. Auto Shutoff: 1
+2% complete. Max time remaining: 11 secs. Auto Shutoff: 1
+4% complete. Max time remaining: 10 secs. Auto Shutoff: 0.00245698
+5% complete. Max time remaining: 10 secs. Auto Shutoff: 7.81992e-06
+Early termination of simulation, the autoshutoff criteria are satisfied.
+Completed 2693 iterations, or 4.88392e-13s of Simulation Time
+Process 0 starting to collect data
+    collecting monitor data
+    collecting source data
+Finished collecting data
+Simulation completed successfully at: Wed Nov 30 14:43:57 2022
+Overall wall time measurements in seconds:
+    time to mesh and initialize: 1
+    time to run FDTD simulation: 0
+    time to finalize data and save to files: 0
+    FDTD solver speed: -nan(ind) Mnodes/s
+    total FDTD solver speed on 16 processes: -nan(ind) Mnodes/s
