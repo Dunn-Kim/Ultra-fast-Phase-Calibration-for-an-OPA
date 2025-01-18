@@ -1,0 +1,174 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>REV_method</title><meta name="generator" content="MATLAB 9.11"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2023-02-24"><meta name="DC.source" content="REV_method.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>REV_method</h1><p>To calibrate initial phases using REV method</p><pre class="codeinput"><span class="keyword">function</span> result = REV_method
+    <span class="keyword">global</span> OPA
+    ch     = OPA.ch;             <span class="comment">% num of channels</span>
+    sample = OPA.sample;         <span class="comment">% num of samples</span>
+    scan   = zeros(1,sample);    <span class="comment">% samples</span>
+    <span class="keyword">for</span> i=1:sample
+    scan(i) = round(3600*i/(sample+1))/10 - 180;
+    <span class="keyword">end</span>
+    Int    = zeros(sample,ch-1); <span class="comment">% intensity table</span>
+    OPAd   = OPA.phase;          <span class="comment">% Default values of OPA</span>
+    result = cell(8,ch);         <span class="comment">% Result table</span>
+    Pha    = [];                 <span class="comment">% Phase Calibration value</span>
+
+    <span class="comment">%%%PhaseErrorCalculation%%%</span>
+    <span class="keyword">for</span> i = 2:ch                              <span class="comment">% one channel by one (2~ch)</span>
+        <span class="comment">%%%Apply_5_Samples%%%</span>
+        <span class="keyword">for</span> j=1:sample                        <span class="comment">% one sample by one</span>
+            PhaseSet(i,scan(j));              <span class="comment">% apply a sample</span>
+            pause(0.06);                      <span class="comment">% DAC: 0.003 s, Camera: 0.03 s(30 Hz)</span>
+            Int(j,i-1) = getSpot(ScreenShot); <span class="comment">% intensity of the sample</span>
+        <span class="keyword">end</span>
+        PhaseSet(i,OPAd(i));                  <span class="comment">% Recover the default state</span>
+
+        <span class="comment">%%%CosineFitting%%%</span>
+        A = [ones(sample,1), cosd(scan)', sind(scan)']\Int(:,i-1); <span class="comment">% A*X=B, X=A\B</span>
+        y0 = A(1);                          <span class="comment">% y-intercept</span>
+        y1 = sqrt(A(2)^2 + A(3)^2);         <span class="comment">% coefficient</span>
+        x0 = atan2(A(3),A(2));              <span class="comment">% x-intercept, atan2(y,x)=arctan(y/x)</span>
+        fit = @(x) y0+y1*cos(x-x0);         <span class="comment">% fitting function</span>
+
+        <span class="comment">%%%StoreParameters%%%</span>
+        result{3,i} = scan;       <span class="comment">% store 5 samples</span>
+        result{4,i} = Int(:,i-1); <span class="comment">% store intensity of 5 samples</span>
+        result{5,i} = fit;        <span class="comment">% store fitting func</span>
+        result{6,i} = y0;         <span class="comment">% store coef, interc</span>
+        result{7,i} = y1;         <span class="comment">% store coef, interc</span>
+        result{8,i} = x0;         <span class="comment">% store coef, interc</span>
+        Pha = [Pha,x0];           <span class="comment">% store phase calibration value</span>
+    <span class="keyword">end</span>
+
+    <span class="comment">%%%Calibration%%%</span>
+    fprintf(<span class="string">"  Calibration starts \n"</span>);
+    Pha = [0,Pha];
+    OPA.phase = OPAd + Pha*180/pi; PhaseSet; <span class="comment">% Calibrate</span>
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Dot indexing is not supported for variables of this type.
+
+Error in REV_method (line 7)
+    ch     = OPA.ch;             % num of channels
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2021b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% REV_method
+% To calibrate initial phases using REV method
+% 
+
+function result = REV_method
+    global OPA 
+    ch     = OPA.ch;             % num of channels
+    sample = OPA.sample;         % num of samples
+    scan   = zeros(1,sample);    % samples
+    for i=1:sample
+    scan(i) = round(3600*i/(sample+1))/10 - 180;
+    end
+    Int    = zeros(sample,ch-1); % intensity table
+    OPAd   = OPA.phase;          % Default values of OPA
+    result = cell(8,ch);         % Result table
+    Pha    = [];                 % Phase Calibration value
+   
+    %%%PhaseErrorCalculation%%%
+    for i = 2:ch                              % one channel by one (2~ch)
+        %%%Apply_5_Samples%%%
+        for j=1:sample                        % one sample by one
+            PhaseSet(i,scan(j));              % apply a sample
+            pause(0.06);                      % DAC: 0.003 s, Camera: 0.03 s(30 Hz)
+            Int(j,i-1) = getSpot(ScreenShot); % intensity of the sample
+        end                                 
+        PhaseSet(i,OPAd(i));                  % Recover the default state
+                
+        %%%CosineFitting%%%
+        A = [ones(sample,1), cosd(scan)', sind(scan)']\Int(:,i-1); % A*X=B, X=A\B
+        y0 = A(1);                          % y-intercept
+        y1 = sqrt(A(2)^2 + A(3)^2);         % coefficient
+        x0 = atan2(A(3),A(2));              % x-intercept, atan2(y,x)=arctan(y/x)
+        fit = @(x) y0+y1*cos(x-x0);         % fitting function
+        
+        %%%StoreParameters%%%
+        result{3,i} = scan;       % store 5 samples
+        result{4,i} = Int(:,i-1); % store intensity of 5 samples
+        result{5,i} = fit;        % store fitting func
+        result{6,i} = y0;         % store coef, interc
+        result{7,i} = y1;         % store coef, interc
+        result{8,i} = x0;         % store coef, interc
+        Pha = [Pha,x0];           % store phase calibration value
+    end                                     
+
+    %%%Calibration%%%
+    fprintf("  Calibration starts \n");
+    Pha = [0,Pha];
+    OPA.phase = OPAd + Pha*180/pi; PhaseSet; % Calibrate
+    
+end
+
+##### SOURCE END #####
+--></body></html>
