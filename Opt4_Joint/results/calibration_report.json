@@ -1,0 +1,8 @@
+{
+  "trials": 20,
+  "I0_ideal": 1.0,
+  "recovery_min": 0.9986977223903589,
+  "recovery_mean": 0.9998798018165601,
+  "converged_95pct": 20,
+  "psll_worst_db": -15.241804537760375
+}

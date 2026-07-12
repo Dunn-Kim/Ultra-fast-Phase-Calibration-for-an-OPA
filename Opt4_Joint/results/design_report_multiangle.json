@@ -1,0 +1,173 @@
+{
+  "config": {
+    "line_N": 32,
+    "wavelength": 1.55,
+    "element_width": 1.0,
+    "d_init": 3.0,
+    "d_min": 2.0,
+    "d_max": 5.0,
+    "theta_target_deg": 0.0,
+    "guard_kappa": 2.0,
+    "beta_start": 0.2,
+    "beta_end": 2.0,
+    "w_sll_ramp_epochs": 100,
+    "eps": 1e-12,
+    "lr_phase": 0.03,
+    "lr_spacing": 0.01,
+    "lr_phase_polish": 0.01,
+    "epochs_warmup": 50,
+    "epochs_joint": 1500,
+    "epochs_polish": 100,
+    "restarts": 24,
+    "s_init_std": 0.5,
+    "n_grid_train": 4001,
+    "n_grid_val": 40001,
+    "design_angles_deg": [
+      0.0,
+      10.0,
+      -10.0,
+      20.0,
+      -20.0,
+      30.0,
+      -30.0
+    ],
+    "angle_agg_gamma": 2.0,
+    "fab_snap_nm": 5.0,
+    "seed": 42,
+    "dtype": "torch.float64",
+    "device": "cpu"
+  },
+  "MA_all_restarts_worst_psll": [
+    -11.572,
+    -11.516,
+    -11.508,
+    -11.508,
+    -11.457,
+    -11.454,
+    -11.446,
+    -11.436,
+    -11.42,
+    -11.39,
+    -11.386,
+    -11.371,
+    -11.365,
+    -11.363,
+    -11.351,
+    -11.339,
+    -11.304,
+    -11.3,
+    -11.266,
+    -11.266,
+    -11.228,
+    -11.069,
+    -10.936,
+    -10.906
+  ],
+  "MA_best": {
+    "psll_db": -12.833490387560643,
+    "main_lobe_I": 1.0,
+    "main_lobe_eff_exEF": 1.0,
+    "fwhm_deg": 0.8126901197053126,
+    "min_gap_um": 2.0058776324373797,
+    "mean_gap_um": 2.939020818961105,
+    "max_gap_um": 4.356057243597302,
+    "aperture_um": 91.10964538779425,
+    "seed": 60,
+    "min_pairwise_gap_diff_um": 0.004999999999999893,
+    "n_unique_gaps": 31
+  },
+  "E1_steering_sweep": [
+    {
+      "theta_deg": -30,
+      "psll_db": -11.540682078494273,
+      "main_lobe_I": 0.6775203441859144,
+      "main_lobe_eff_exEF": 0.9661561985903256,
+      "fwhm_deg": 0.9425154121698505
+    },
+    {
+      "theta_deg": -25,
+      "psll_db": -12.208559119986138,
+      "main_lobe_I": 0.7495939299917371,
+      "main_lobe_eff_exEF": 0.9633174702409922,
+      "fwhm_deg": 0.9007170864431515
+    },
+    {
+      "theta_deg": -20,
+      "psll_db": -12.87701785112275,
+      "main_lobe_I": 0.8171288356737773,
+      "main_lobe_eff_exEF": 0.961627956325533,
+      "fwhm_deg": 0.8686386584469687
+    },
+    {
+      "theta_deg": -15,
+      "psll_db": -13.291366032479983,
+      "main_lobe_I": 0.8791111660091924,
+      "main_lobe_eff_exEF": 0.9643911639803161,
+      "fwhm_deg": 0.8443601772891789
+    },
+    {
+      "theta_deg": -10,
+      "psll_db": -13.1548608079557,
+      "main_lobe_I": 0.9287002919977363,
+      "main_lobe_eff_exEF": 0.9680163097921829,
+      "fwhm_deg": 0.8272830421895847
+    },
+    {
+      "theta_deg": -5,
+      "psll_db": -13.20873369188169,
+      "main_lobe_I": 0.9528187501113717,
+      "main_lobe_eff_exEF": 0.9627919113695097,
+      "fwhm_deg": 0.8185410431649824
+    },
+    {
+      "theta_deg": 0,
+      "psll_db": -13.27217979790397,
+      "main_lobe_I": 0.9571984524575328,
+      "main_lobe_eff_exEF": 0.9571984524575328,
+      "fwhm_deg": 0.8149397516313266
+    },
+    {
+      "theta_deg": 5,
+      "psll_db": -13.20873369188167,
+      "main_lobe_I": 0.9528187501113716,
+      "main_lobe_eff_exEF": 0.9627919113695096,
+      "fwhm_deg": 0.8185410431649824
+    },
+    {
+      "theta_deg": 10,
+      "psll_db": -13.1548608079557,
+      "main_lobe_I": 0.9287002919977358,
+      "main_lobe_eff_exEF": 0.9680163097921824,
+      "fwhm_deg": 0.8272830421895847
+    },
+    {
+      "theta_deg": 15,
+      "psll_db": -13.29136603247999,
+      "main_lobe_I": 0.8791111660091926,
+      "main_lobe_eff_exEF": 0.9643911639803164,
+      "fwhm_deg": 0.8443601772891789
+    },
+    {
+      "theta_deg": 20,
+      "psll_db": -12.877017851122732,
+      "main_lobe_I": 0.8171288356737769,
+      "main_lobe_eff_exEF": 0.9616279563255327,
+      "fwhm_deg": 0.8686386584469687
+    },
+    {
+      "theta_deg": 25,
+      "psll_db": -12.208559119986134,
+      "main_lobe_I": 0.7495939299917374,
+      "main_lobe_eff_exEF": 0.9633174702409926,
+      "fwhm_deg": 0.900717086443148
+    },
+    {
+      "theta_deg": 30,
+      "psll_db": -11.540682078494278,
+      "main_lobe_I": 0.6775203441859144,
+      "main_lobe_eff_exEF": 0.9661561985903256,
+      "fwhm_deg": 0.9425154121698647
+    }
+  ],
+  "runtime_sec": 276.8
+}

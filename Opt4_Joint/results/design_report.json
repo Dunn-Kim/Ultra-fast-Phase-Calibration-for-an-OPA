@@ -1,0 +1,143 @@
+{
+  "config": {
+    "line_N": 32,
+    "wavelength": 1.55,
+    "element_width": 1.0,
+    "d_init": 3.0,
+    "d_min": 2.0,
+    "d_max": 5.0,
+    "theta_target_deg": 0.0,
+    "guard_kappa": 2.0,
+    "beta_start": 0.2,
+    "beta_end": 2.0,
+    "w_sll_ramp_epochs": 100,
+    "eps": 1e-12,
+    "lr_phase": 0.03,
+    "lr_spacing": 0.01,
+    "lr_phase_polish": 0.01,
+    "epochs_warmup": 50,
+    "epochs_joint": 500,
+    "epochs_polish": 100,
+    "restarts": 16,
+    "s_init_std": 0.1,
+    "n_grid_train": 4001,
+    "n_grid_val": 40001,
+    "fab_snap_nm": 5.0,
+    "seed": 42,
+    "dtype": "torch.float64",
+    "device": "cpu"
+  },
+  "A_baseline_uniform": {
+    "psll_db": -1.649759963692722,
+    "main_lobe_I": 0.9999999999999998,
+    "main_lobe_eff_exEF": 0.9999999999999998,
+    "fwhm_deg": 0.8198434533906604,
+    "min_gap_um": 3.0,
+    "mean_gap_um": 3.0,
+    "max_gap_um": 3.0,
+    "aperture_um": 93.0
+  },
+  "B_joint_best": {
+    "psll_db": -15.518593106566833,
+    "main_lobe_I": 0.9999999348922586,
+    "main_lobe_eff_exEF": 0.9999999348922586,
+    "fwhm_deg": 0.8802470116185088,
+    "min_gap_um": 2.0233621765472067,
+    "mean_gap_um": 2.832192884801788,
+    "max_gap_um": 4.192032684103779,
+    "aperture_um": 87.79797942885543,
+    "seed": 50
+  },
+  "B_all_restarts_psll": [
+    -15.519,
+    -15.28,
+    -15.1,
+    -15.092,
+    -15.077,
+    -14.975,
+    -14.915,
+    -14.902,
+    -14.9,
+    -14.871,
+    -14.786,
+    -14.749,
+    -14.719,
+    -14.702,
+    -14.595,
+    -14.016
+  ],
+  "C_spacing_only": {
+    "psll_db": -14.032443486654781,
+    "main_lobe_I": 1.0,
+    "main_lobe_eff_exEF": 1.0,
+    "fwhm_deg": 0.7934842381050017,
+    "min_gap_um": 2.036804799337774,
+    "mean_gap_um": 2.8949813663347976,
+    "max_gap_um": 4.4279678870145895,
+    "aperture_um": 89.74442235637872
+  },
+  "E4_fab_snap": {
+    "psll_db": -15.455690995118644,
+    "main_lobe_I": 0.9999999990873238,
+    "main_lobe_eff_exEF": 0.9999999990873238,
+    "fwhm_deg": 0.8802270246297959,
+    "psll_degrade_db": 0.06290211144818869
+  },
+  "E1_steering_sweep": [
+    {
+      "theta_deg": 0,
+      "psll_db": -15.455690995118644,
+      "main_lobe_I": 0.9999999990873238,
+      "main_lobe_eff_exEF": 0.9999999990873238,
+      "fwhm_deg": 0.8802270246297959
+    },
+    {
+      "theta_deg": 10,
+      "psll_db": -13.96680620430157,
+      "main_lobe_I": 0.9474305592044079,
+      "main_lobe_eff_exEF": 0.9875395125940487,
+      "fwhm_deg": 0.893618376302264
+    },
+    {
+      "theta_deg": -10,
+      "psll_db": -13.966806204301516,
+      "main_lobe_I": 0.9474305592044081,
+      "main_lobe_eff_exEF": 0.9875395125940489,
+      "fwhm_deg": 0.893618376302264
+    },
+    {
+      "theta_deg": 20,
+      "psll_db": -12.529316456129491,
+      "main_lobe_I": 0.8292443857964581,
+      "main_lobe_eff_exEF": 0.9758859915283006,
+      "fwhm_deg": 0.9366910112926483
+    },
+    {
+      "theta_deg": -20,
+      "psll_db": -12.529316456129465,
+      "main_lobe_I": 0.8292443857964586,
+      "main_lobe_eff_exEF": 0.9758859915283012,
+      "fwhm_deg": 0.9366910112926519
+    },
+    {
+      "theta_deg": 30,
+      "psll_db": -11.127230442486074,
+      "main_lobe_I": 0.6804242082783665,
+      "main_lobe_eff_exEF": 0.9702971610232065,
+      "fwhm_deg": 1.0162442864423156
+    },
+    {
+      "theta_deg": -30,
+      "psll_db": -11.12723044248609,
+      "main_lobe_I": 0.6804242082783671,
+      "main_lobe_eff_exEF": 0.9702971610232075,
+      "fwhm_deg": 1.0162442864423156
+    }
+  ],
+  "E3_robustness_mc": {
+    "p50": -14.80621337890625,
+    "p95": -14.237582206726074,
+    "worst": -13.186746597290039
+  },
+  "runtime_sec": 15.1
+}
