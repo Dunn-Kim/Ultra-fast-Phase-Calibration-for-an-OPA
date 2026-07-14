@@ -1,0 +1,22 @@
+{
+ "V1 sigmoid+등간격섭동(현행)": {
+  "worst": -11.47,
+  "at0": -13.48,
+  "sat_gaps": 0
+ },
+ "V2 sigmoid+랜덤 init": {
+  "worst": -11.31,
+  "at0": -13.19,
+  "sat_gaps": 5
+ },
+ "V3 projected+랜덤 init": {
+  "worst": -11.15,
+  "at0": -13.42,
+  "sat_gaps": 8
+ },
+ "V4 projected+AMSGrad+랜덤": {
+  "worst": -11.44,
+  "at0": -13.55,
+  "sat_gaps": 11
+ }
+}
