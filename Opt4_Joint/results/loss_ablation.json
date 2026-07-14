@@ -1,0 +1,71 @@
+{
+  "reference": {
+    "champion_full_budget": -11.54,
+    "bilevel_cma": -11.62,
+    "protocol": "설계 6restart×800ep(축소예산), 평가 고정 κ=2"
+  },
+  "base(κ2,β2,γ2)": {
+    "worst_psll_db": -11.32,
+    "psll_at_0": -12.78,
+    "design_internal_db": -11.41,
+    "aperture_um": 94.87,
+    "sec": 36
+  },
+  "κ=1.5(마스크 좁게)": {
+    "worst_psll_db": -11.31,
+    "psll_at_0": -13.22,
+    "design_internal_db": -11.45,
+    "aperture_um": 98.66,
+    "sec": 36
+  },
+  "κ=3.0(마스크 넓게)": {
+    "worst_psll_db": -11.37,
+    "psll_at_0": -13.02,
+    "design_internal_db": -11.52,
+    "aperture_um": 95.89,
+    "sec": 36
+  },
+  "β_end=6(hard 근접)": {
+    "worst_psll_db": -11.52,
+    "psll_at_0": -13.28,
+    "design_internal_db": -11.75,
+    "aperture_um": 97.35,
+    "sec": 36
+  },
+  "β_end=1(soft하게)": {
+    "worst_psll_db": -11.21,
+    "psll_at_0": -13.41,
+    "design_internal_db": -11.12,
+    "aperture_um": 91.89,
+    "sec": 36
+  },
+  "γ=4(worst 강화)": {
+    "worst_psll_db": -11.22,
+    "psll_at_0": -12.82,
+    "design_internal_db": -11.31,
+    "aperture_um": 94.55,
+    "sec": 36
+  },
+  "γ=0.5(평균 근접)": {
+    "worst_psll_db": -11.45,
+    "psll_at_0": -14.18,
+    "design_internal_db": -11.54,
+    "aperture_um": 94.7,
+    "sec": 36
+  },
+  "각도 5°조밀(13각)": {
+    "worst_psll_db": -11.52,
+    "psll_at_0": -13.05,
+    "design_internal_db": -11.63,
+    "aperture_um": 94.63,
+    "sec": 66
+  },
+  "lr_s=3e-2(옵티마이저)": {
+    "worst_psll_db": -11.27,
+    "psll_at_0": -14.06,
+    "design_internal_db": -11.37,
+    "aperture_um": 90.15,
+    "sec": 38
+  },
+  "runtime_sec": 355.4
+}
