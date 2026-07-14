@@ -1,12 +1,13 @@
 {
   "calibration": {
-    "theta": [
-      -1.0463,
-      0.6217,
-      -1.0425
+    "oblq_p": 1.0,
+    "g_coef": [
+      -0.4798,
+      0.4199,
+      -0.1413
     ],
-    "fit_rms_db": 0.093,
-    "note": "log(EF_true/EF_naive)를 15관측각에서 짝수3차 회귀"
+    "fit_rms_db": 0.092,
+    "note": "obliquity p=1 구조분리 후 잔차 g만 회귀(꼬리 발산 차단)"
   },
   "ef_error_db": {
     "angles": [
@@ -15,7 +16,8 @@
       20,
       30,
       45,
-      60
+      60,
+      80
     ],
     "naive_vs_true": [
       0.0,
@@ -23,30 +25,40 @@
       0.88,
       1.94,
       4.26,
-      7.68
+      7.68,
+      17.04
     ],
     "corr_vs_true": [
       0.0,
-      -0.05,
-      -0.13,
+      -0.03,
+      -0.1,
       -0.14,
-      -0.06,
-      0.08
+      -0.07,
+      0.06,
+      0.11
     ]
   },
-  "naive_optimized": {
-    "worst_on_TRUE": -10.06,
-    "at0_TRUE": -15.49,
-    "worst_on_designmodel": -11.65,
-    "constraints_ok": true
+  "N32_naive_opt": {
+    "worst_TRUE": -10.06,
+    "worst_design": -11.65,
+    "optimism_db": -1.59
   },
-  "graybox_corrected": {
-    "worst_on_TRUE": -10.25,
-    "at0_TRUE": -15.22,
-    "worst_on_designmodel": -10.15,
-    "constraints_ok": true
+  "N32_graybox_opt": {
+    "worst_TRUE": -10.09,
+    "worst_design": -9.98,
+    "optimism_db": 0.11
   },
-  "graybox_gain_db": 0.19,
+  "N32_graybox_gain_db": 0.03,
+  "N64_reeval": {
+    "reported_naive": -14.76,
+    "actual_TRUE": -13.03,
+    "optimism_db": -1.73
+  },
+  "N128_reeval": {
+    "reported_naive": -17.41,
+    "actual_TRUE": -15.69,
+    "optimism_db": -1.72
+  },
   "degeneracy_demo": {
     "fake_loss": -10.48,
     "theta": [
@@ -54,7 +66,7 @@
       -1.31,
       -1.36
     ],
-    "note": "θ 앵커 없이 PSLL 공동최적화 → 가짜 손실(무의미). 반드시 데이터 앵커 필요"
+    "note": "θ 앵커 없이 공동최적화 → 가짜손실(부엽 인위억제). 분리 필수"
   },
-  "runtime_sec": 200.9
+  "runtime_sec": 212.0
 }

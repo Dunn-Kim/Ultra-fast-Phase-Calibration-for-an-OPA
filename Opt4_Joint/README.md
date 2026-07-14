@@ -133,6 +133,37 @@ python test_opt4.py               # 검증 스위트 7종
   계보) −11.59, 대량 랜덤시딩 30k(Yu 2024 계보) −11.50 — 챔피언 미돌파,
   포화 재확증. DL 교체 근거는 문헌에도 없음(offline MBO의 objective hacking).
 
+## Gray-box 모델오차 보정 (Kennedy-O'Hagan model discrepancy)
+
+해석 모델은 AF(간섭항)만 정확 — 계통오차는 EF 포락선(obliquity·모드형상·결합)에 몰림.
+EF에만 보정변수 추가, AF 해석식 유지 (`experiment_graybox.py`, config `ef_*` 필드):
+
+```
+EF_corr(u) = sinc(w·u/λ) · (1−u²)^(p/2) · exp(a1·u²+a2·u⁴+a3·u⁶)
+             └ top-hat ┘  └ obliquity 구조항 ┘  └ 잔차 g, g(0)=0 ┘
+```
+
+**핵심 규율 (confounding 회피, opus 워크플로가 KOH 2001/Brynjarsdóttir 2014/Plumlee 2017로 검증):**
+θ=(p,g)는 관측(단채널 far-field)으로만 회귀, 간격 x는 θ 동결 모델로만 최적화. **분리 필수** —
+θ·x 공동최적화는 `inf_θ PSLL=−∞` 퇴화(EF가 broadside 스파이크로 붕괴), `degeneracy_demo()` 실증.
+
+obliquity를 구조항으로 분리한 게 결정적: 자유 다항만으로는 대각도 EF 오차(60° +7.7dB, 80° +17dB)를
+꼬리 발산 없이 못 잡음. 구조항 후 잔차 회귀 RMS 0.09 dB, 전 각도 보정오차 ≤0.14 dB.
+
+**모델오차의 실제 영향 — 헤드라인 PSLL은 ~1.6~1.7 dB 낙관 편향** (관측대용 TRUE=Gaussian×√(1−u²) 기준):
+
+| N | 보고값(naive) | 실제(TRUE) | 낙관 편향 |
+|---|---|---|---|
+| 32 | −11.75 dB | **−10.1 dB** | 1.6 dB |
+| 64 | −14.76 dB | **−13.0 dB** | 1.7 dB |
+| 128 | −17.41 dB | **−15.7 dB** | 1.7 dB |
+
+- 보정모델 재설계 시 예측-실측 갭 1.6dB → **0.1dB (정직)**. 설계 이득 자체는 +0.2dB로 작음
+  (EF는 매끈 → 배치 순위 거의 불변) — 진짜 가치는 **제작 전 신뢰 가능한 절대 PSLL**
+- 잔존 리스크: 상호결합은 x-의존이라 단채널 EF로 흡수 못 함. 목표 간격대 2차 소량 여부 확인 필요
+- 관측 없으면 자유 다항 금지 → 물리 2변수(w_eff,p) + 로버스트 min-max로 대체
+- 기본 config(ef 무보정)는 기존과 항등 (test_opt4 7/7 통과). 산출물: `graybox_experiment.json`
+
 ## Lumerical 연동 (v2 확장 경로)
 
 간격은 시뮬레이터-인-더-루프에 넣지 않는다(지오메트리 재메싱 비용 + 상호결합으로 surrogate
