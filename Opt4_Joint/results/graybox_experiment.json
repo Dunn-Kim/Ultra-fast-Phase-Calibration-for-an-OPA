@@ -1,0 +1,60 @@
+{
+  "calibration": {
+    "theta": [
+      -1.0463,
+      0.6217,
+      -1.0425
+    ],
+    "fit_rms_db": 0.093,
+    "note": "log(EF_true/EF_naive)를 15관측각에서 짝수3차 회귀"
+  },
+  "ef_error_db": {
+    "angles": [
+      0,
+      10,
+      20,
+      30,
+      45,
+      60
+    ],
+    "naive_vs_true": [
+      0.0,
+      0.22,
+      0.88,
+      1.94,
+      4.26,
+      7.68
+    ],
+    "corr_vs_true": [
+      0.0,
+      -0.05,
+      -0.13,
+      -0.14,
+      -0.06,
+      0.08
+    ]
+  },
+  "naive_optimized": {
+    "worst_on_TRUE": -10.06,
+    "at0_TRUE": -15.49,
+    "worst_on_designmodel": -11.65,
+    "constraints_ok": true
+  },
+  "graybox_corrected": {
+    "worst_on_TRUE": -10.25,
+    "at0_TRUE": -15.22,
+    "worst_on_designmodel": -10.15,
+    "constraints_ok": true
+  },
+  "graybox_gain_db": 0.19,
+  "degeneracy_demo": {
+    "fake_loss": -10.48,
+    "theta": [
+      1.06,
+      -1.31,
+      -1.36
+    ],
+    "note": "θ 앵커 없이 PSLL 공동최적화 → 가짜 손실(무의미). 반드시 데이터 앵커 필요"
+  },
+  "runtime_sec": 200.9
+}
