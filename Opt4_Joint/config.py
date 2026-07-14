@@ -15,6 +15,14 @@ class JointConfig:
     d_max: float = 5.0         # µm (개구 상한 = (N-1)*d_max 구조 보장)
     theta_target_deg: float = 0.0
 
+    # 소자인자 EF 보정 (gray-box model-discrepancy). 기본값 = 무보정(top-hat sinc, 기존과 동일).
+    #   EF(u) = sinc(w_eff·u/λ) · (1−u²)^(p/2) · exp(a1·u²+a2·u⁴+a3·u⁶)
+    #   ├ w_eff: 유효 개구폭[µm] (None=element_width)  ├ oblq_p: obliquity 지수 (0=없음, 1=cosθ)
+    #   └ ef_gcoef: 짝수 다항 잔차 계수 (관측회귀로만 학습 — PSLL과 분리). g(0)=0 구조 보존.
+    ef_w_eff: float = None
+    ef_oblq_p: float = 0.0
+    ef_gcoef: tuple = (0.0, 0.0, 0.0)
+
     # 손실
     guard_kappa: float = 2.0   # 주엽 가드밴드 Δ = κ·λ/L_ap
     beta_start: float = 0.2    # soft-PSLL 온도 [1/dB]

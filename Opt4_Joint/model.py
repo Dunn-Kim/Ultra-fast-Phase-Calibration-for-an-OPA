@@ -49,8 +49,18 @@ class OPAModel:
 
     # --- 패턴 ---
     def element_factor_amp(self, u):
+        # EF(u) = sinc(w_eff·u/λ)·(1−u²)^(p/2)·exp(g(u)),  g=a1u²+a2u⁴+a3u⁶ (g(0)=0)
+        # 구조항: obliquity (1−u²)^(p/2)를 다항에서 분리 → 꼬리 발산 차단(|u|→1에서 EF→0 강제).
+        # 잔차 g는 관측회귀로만 학습(gray-box). 기본값(w_eff=None,p=0,g=0)이면 기존 top-hat sinc와 동일.
         c = self.cfg
-        return th.sinc(c.element_width * u / c.wavelength)
+        w_eff = c.element_width if c.ef_w_eff is None else c.ef_w_eff
+        ef = th.sinc(w_eff * u / c.wavelength)
+        if c.ef_oblq_p:
+            ef = ef * (1.0 - u ** 2).clamp(min=0.0) ** (c.ef_oblq_p / 2.0)
+        a1, a2, a3 = c.ef_gcoef
+        if a1 or a2 or a3:
+            ef = ef * th.exp(a1 * u ** 2 + a2 * u ** 4 + a3 * u ** 6)
+        return ef
 
     def intensity(self, x, phi, u):
         # I(u) = [ EF_amp·|AF|/N ]²  — x[µm], phi[rad], u = sinθ (임의 격자/스칼라)

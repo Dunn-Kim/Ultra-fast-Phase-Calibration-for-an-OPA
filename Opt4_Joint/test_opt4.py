@@ -145,6 +145,24 @@ def test_runtime():
     print(f'[7] 런타임 스모크 OK ({dt:.1f} s / 650 epoch)')
 
 
+# 8. Gray-box EF 보정 — 기본값 항등 + 구조항 g(0)=0 불변식
+def test_graybox_ef():
+    import torch as th
+    from config import JointConfig
+    from model import OPAModel
+    u = th.sin(th.deg2rad(th.tensor([0., 20, 45, 89], dtype=th.float64)))
+    # 기본 config(무보정) = 기존 top-hat sinc
+    m0 = OPAModel(JointConfig())
+    assert th.allclose(m0.element_factor_amp(u), th.sinc(1.0 * u / 1.55), rtol=1e-12)
+    # obliquity 구조항: |u|→1서 EF→0 (꼬리 발산 차단)
+    m1 = OPAModel(JointConfig(ef_oblq_p=1.0))
+    assert m1.element_factor_amp(th.tensor([0.9999], dtype=th.float64)).item() < 0.02
+    # g(0)=0 보존 (주엽 게이지) — 임의 g계수에도 broadside EF = 1
+    m2 = OPAModel(JointConfig(ef_oblq_p=1.0, ef_gcoef=(-0.5, 0.4, -0.1)))
+    assert abs(m2.element_factor_amp(th.tensor([0.0], dtype=th.float64)).item() - 1.0) < 1e-12
+    print('[8] gray-box EF OK (기본 항등, obliquity 꼬리→0, g(0)=0 게이지)')
+
+
 if __name__ == '__main__':
     test_legacy_identity()
     test_gradcheck()
@@ -153,4 +171,5 @@ if __name__ == '__main__':
     test_calibration_e2e()
     test_steering()
     test_runtime()
+    test_graybox_ef()
     print('\n전체 테스트 통과')
