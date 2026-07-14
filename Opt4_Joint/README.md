@@ -78,6 +78,61 @@ python test_opt4.py               # 검증 스위트 7종
   (−12~−13 dB) 근방. 산출물: `final_spacing_multiangle.csv`, `design_report_multiangle.json`,
   `psll_vs_angle.png`, `pattern_steered.png`.
 
+## 최적화 너머 (beyond) — 방법론 한계 실측
+
+`experiment_beyond.py` + 4방향 병렬 탐색으로 대안 방법론을 전수 벤치마크
+(공통 하네스 `benchmark_common.py`, 조향 스윕 ±30° worst PSLL):
+
+| 방법 | worst PSLL | 판정 |
+|---|---|---|
+| 다각도 Adam (기존 챔피언) | −11.54 dB | 기준 |
+| bilevel CMA-ES (polish 내장 목적) | −11.62 dB | 구 챔피언 (`final_spacing_beyond.csv`) |
+| **손실 정비: β_end 2→6 + 각도 5° 조밀 (`experiment_loss_ablation.py`)** | **−11.75 dB** | **현 챔피언** (`final_spacing_lossfix.csv`, 1° 스윕 검증) |
+| v-공간 재정식화 (닫힌형 W(v), 연속각 보증) | −11.36~−11.57 dB | 동급 + @0° −14.2 개선, 7× 고속 |
+| 조합 ILS (격자 1-opt) | −11.40 dB | 동급 |
+| CMA-ES/좌표하강 (해석위상 목적) | −10.4~−11.4 dB | 순위 역전 — 나쁜 대리변수 실증 |
+| 결정론 배열 (golden/chirp/prime) | −5~−9.8 dB | 탈락 (quasi-Bragg 피크) |
+| NN 회귀 surrogate (`experiment_dl.py`) | −7.2~−9.3 dB | 탈락 — surrogate 착취 실증 (R²=0.46, 예측 −14.0 vs 실제 −7.2) |
+| 신경망 재파라미터화 (deep prior) | −11.03 dB | 탈락 — 동일 목적, NN 파라미터화가 직접 최적화에 열세 |
+
+핵심 결론:
+0. **손실 노브 ablation** (`results/loss_ablation.json`): 유효 노브 = soft-max 온도
+   β_end 2→6 (+0.20 dB, soft-hard 갭 축소) + 설계각 10°→5° 조밀화 (+0.20 dB).
+   무효 노브 = 가드마스크 κ(±0.05), 각도집계 γ(±0.1, 방향 비일관), lr(옵티마이저).
+   결합 + 풀예산(24×1500) → **−11.75 dB** (worst, 1° 스윕 검증) — 손실 정비가
+   탐색기 교체(CMA +0.08)보다 컸음.
+1. **순위 역전 발견**: 해석 조향해 위상만으로 간격을 평가하면 polish 후 순위가 뒤집힘 —
+   모든 설계 목적함수는 위상 polish를 내장(bilevel)해야 함.
+2. **소프트웨어 포화**: 세 독립 방법군(Adam/CMA/ILS)이 전부 −11.4~−11.66 평탄 군집 수렴 →
+   N=32·균일진폭·d_min 2µm·w=1µm 제약의 전역 최적 ≈ −11.6~−12.0 dB. 배치 개선 여지 소진.
+3. **다음 지렛대는 하드웨어**: 소자폭 w 1.0→0.4µm 축소가 EF 기울기 페널티(+1.54 dB@30°,
+   알고리즘으로 제거 불가) 를 없애 worst −12.3±0.4 dB 예상(무작위 배치 60개 실측 평균 +0.97 dB).
+   대가 = 절대 방사효율 하락. 그 외 N 배증(~3 dB), d_min 축소(결합 억제 구조 필요).
+4. 기각 확정(실측): 이중피치 인터리브(+0.1 dB 악화), DE(−9.7), SA(기여 0),
+   λ-스티어링(이동량 < 빔폭), 진폭 taper 단독(+0.8 dB뿐).
+
+## 채널 수 스케일링 최종 산출물 (조향 ±30° worst-case, d_min 2µm, 5nm 스냅)
+
+| N | worst PSLL | @0° | 개구 | 배치 CSV |
+|---|---|---|---|---|
+| 32 | **−11.75 dB** | −13.84 | 92 µm | `final_spacing_lossfix.csv` |
+| 64 | **−14.76 dB** | −16.64 | 193 µm | `final_spacing_N64.csv` |
+| 128 | **−17.41 dB** | −18.39 | 383 µm | `final_spacing_N128.csv` |
+
+## 문헌 검증 (웹 조사 워크플로, 논문 전수 URL 확인)
+
+- 도메인 SOTA = 완전 랜덤 배치 + 전역/구배 최적화 + 다각도 worst-case 목적
+  (Komljenovic, Opt. Express 2017 → Wang, Appl. Opt. 2022 → Zang, Photonics 2025).
+  본 파이프라인은 이 계보의 상위호환.
+- 문헌 앵커 대비: Yu 2024(N=64 랜덤셔플) @0° −13.46 → ±45° **−8.27 붕괴**;
+  Hutchison 2016(실칩 N=128, min 5.4µm) ±45° >10 dB; Elsheikh 2024(N=100 GA) −11 dB;
+  Qiu LPR 2024(N=120 GA) 12.8–13.5 dB — **본 결과는 전 구간 문헌 상회/상단**.
+- 이론 바닥(Lo 1964/Steinberg 확률배열): 평균 1/N + 피크 마진 → N=32 실질 바닥
+  −12~−13 dB. −11.75는 바닥 0.3~1 dB 이내.
+- 문헌 선정 추가 구현(`experiment_slp.py`): SLP-minimax 볼록 폴리시(You 2017 AWPL
+  계보) −11.59, 대량 랜덤시딩 30k(Yu 2024 계보) −11.50 — 챔피언 미돌파,
+  포화 재확증. DL 교체 근거는 문헌에도 없음(offline MBO의 objective hacking).
+
 ## Lumerical 연동 (v2 확장 경로)
 
 간격은 시뮬레이터-인-더-루프에 넣지 않는다(지오메트리 재메싱 비용 + 상호결합으로 surrogate
