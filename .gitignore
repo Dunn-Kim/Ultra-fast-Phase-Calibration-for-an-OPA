@@ -1,3 +1,8 @@
 
 *.ini
 /.omc
+__pycache__/
+*.pyc
+Opt4_Joint/.omc/
+venv/
+.DS_Store
