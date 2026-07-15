@@ -163,6 +163,32 @@ def test_graybox_ef():
     print('[8] gray-box EF OK (기본 항등, obliquity 꼬리→0, g(0)=0 게이지)')
 
 
+# 9. 고속 캘리브레이션 — 카메라 프레임 5장으로 주엽 복원 (ε 미지, 실칩 인터페이스)
+def test_calibrate_fast():
+    import math
+    import torch as th
+    from config import JointConfig
+    from main_calibration import calibrate_fast
+    from model import OPAModel
+    cfg = JointConfig()
+    m = OPAModel(cfg)
+    x = m.uniform_positions()
+    x.requires_grad_(False)
+    th.manual_seed(3)
+    eps = 2 * math.pi * th.rand(cfg.line_N, dtype=cfg.dtype) - math.pi
+    eps[0] = 0.0                                    # 채널 0 = 기준
+    g = th.Generator().manual_seed(0)
+
+    def shoot(phi_a):                                # 카메라 프레임 (ε는 알고리즘에 비노출)
+        I = m.intensity(x, -(phi_a + eps), m.u_train)
+        return (I * (1 + 0.01 * th.randn(I.shape, generator=g, dtype=cfg.dtype))).clamp(min=0)
+
+    phi = calibrate_fast(cfg, m, x, shoot, frames=5)
+    rec = (th.exp(1j * (phi + eps)).sum().abs() ** 2 / cfg.line_N ** 2).item()
+    assert rec >= 0.98, f'5프레임 복원율 {rec:.3f} < 0.98'
+    print(f'[9] 고속 캘리브레이션 OK (5프레임, 복원율 {rec:.4f} — REV는 155프레임에 0.968)')
+
+
 if __name__ == '__main__':
     test_legacy_identity()
     test_gradcheck()
@@ -172,4 +198,5 @@ if __name__ == '__main__':
     test_steering()
     test_runtime()
     test_graybox_ef()
+    test_calibrate_fast()
     print('\n전체 테스트 통과')

@@ -31,7 +31,52 @@ def load_frozen_positions(cfg, spacing_csv):
     return x
 
 
+def calibrate_fast(cfg, model, x_frozen, shoot, frames=5, inner=250, lr=0.2, restarts=3):
+    """
+    프로덕션 캘리브레이션 — 카메라 프레임만 사용 (ε 미지, 실칩 적용 가능).
+
+    shoot(phi_applied) -> 전체 far-field 강도 패턴 (model.u_train 격자, 1D 텐서)
+      = 카메라 프레임 1장. 이것이 유일한 관측 통로.
+
+    원리: MATLAB REV(getSpot)는 프레임에서 스팟 강도 1개만 뽑아 31개 미지수에 5N=155장을 쓴다.
+    카메라는 매 프레임 전체 패턴(수천 픽셀 = 독립 방정식 다수)을 주므로, 전체 패턴에
+    ε̂ 를 적합하면 5장으로 충분하다 (155 → 5, 31배). 벤치마크: calib_benchmark.py
+
+    프로브: 랜덤 U(−π,π). Hadamard 는 ±π/2 2값뿐이라 프레임당 다양성이 빈약해 오히려 열세
+    (calib_probe_design.json 실측). 멀티스타트로 국소최소 회피.
+
+    반환: 인가할 보정 위상 φ_a (= −ε̂). 하드웨어 변경 없음 — 위상만 조율.
+    """
+    if x_frozen.requires_grad:
+        raise ValueError('캘리브레이션 단계에서 간격은 변수가 될 수 없음 (Stage A에서 확정)')
+    th.manual_seed(cfg.seed)
+    probes, obs = [], []
+    for f in range(frames):
+        p = th.zeros(cfg.line_N, dtype=cfg.dtype) if f == 0 else \
+            (2 * math.pi * th.rand(cfg.line_N, dtype=cfg.dtype) - math.pi)
+        p[0] = 0.0                                  # 채널 0 = 위상 기준
+        probes.append(p)
+        obs.append(shoot(p))                        # 카메라 프레임 1장
+
+    best, best_loss = None, float('inf')
+    for r in range(restarts):
+        th.manual_seed(cfg.seed + r)
+        eh = (0.3 * th.randn(cfg.line_N, dtype=cfg.dtype)).requires_grad_(True)
+        opt = th.optim.Adam([eh], lr=lr)
+        loss = None
+        for _ in range(inner):
+            opt.zero_grad()
+            loss = sum(((model.intensity(x_frozen, -(p + eh), model.u_train) - o) ** 2).mean()
+                       for p, o in zip(probes, obs))
+            loss.backward()
+            opt.step()
+        if loss.item() < best_loss:
+            best_loss, best = loss.item(), eh.detach().clone()
+    return -best
+
+
 def calibrate(cfg, model, x_frozen, phase_error, epochs=300):
+    # 참고용(시뮬레이션 전용) — ε를 인자로 받으므로 실칩에는 쓸 수 없다. 실칩은 calibrate_fast 사용.
     if x_frozen.requires_grad:
         raise ValueError('캘리브레이션 단계에서 간격은 변수가 될 수 없음 (Stage A에서 확정)')
     phi = th.zeros(cfg.line_N, dtype=cfg.dtype, device=cfg.device, requires_grad=True)
