@@ -1,0 +1,37 @@
+{
+  "REV-5 (MATLAB 현행)": {
+    "frames": 155,
+    "recovery_mean": 0.9002,
+    "recovery_min": 0.8554
+  },
+  "REV-3 (최소 코사인)": {
+    "frames": 93,
+    "recovery_mean": 0.899,
+    "recovery_min": 0.8526
+  },
+  "SPGD 150iter": {
+    "frames": 300,
+    "recovery_mean": 0.0545,
+    "recovery_min": 0.0042
+  },
+  "SPGD 50iter": {
+    "frames": 100,
+    "recovery_mean": 0.0295,
+    "recovery_min": 0.0023
+  },
+  "전체패턴+Adam 8프레임": {
+    "frames": 8,
+    "recovery_mean": 1.0,
+    "recovery_min": 1.0
+  },
+  "전체패턴+Adam 4프레임": {
+    "frames": 4,
+    "recovery_mean": 0.627,
+    "recovery_min": 0.079
+  },
+  "전체패턴+Adam 2프레임": {
+    "frames": 2,
+    "recovery_mean": 0.2137,
+    "recovery_min": 0.0302
+  }
+}
