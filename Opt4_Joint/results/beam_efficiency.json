@@ -1,0 +1,76 @@
+{
+  "eta_vs_spacing": [
+    {
+      "case": "등간격 3µm",
+      "d_bar_um": 3.0,
+      "eta": 0.3401,
+      "theory_lam_2d": 0.258
+    },
+    {
+      "case": "비등간격 챔피언(우리)",
+      "d_bar_um": 2.971,
+      "eta": 0.2743,
+      "theory_lam_2d": 0.261
+    },
+    {
+      "case": "등간격 2µm (d_min)",
+      "d_bar_um": 2.0,
+      "eta": 0.3957,
+      "theory_lam_2d": 0.388
+    },
+    {
+      "case": "등간격 1.0µm",
+      "d_bar_um": 1.0,
+      "eta": 0.9025,
+      "theory_lam_2d": 0.775
+    },
+    {
+      "case": "등간격 0.775µm (λ/2)",
+      "d_bar_um": 0.775,
+      "eta": 0.9079,
+      "theory_lam_2d": 1.0
+    }
+  ],
+  "pattern_effect": {
+    "aperiodic_champion": 0.2743,
+    "uniform_same_dbar": 0.3429,
+    "delta": -0.0686,
+    "d_bar": 2.971
+  },
+  "eta_vs_width": [
+    {
+      "w_um": 0.4,
+      "eta": 0.1619
+    },
+    {
+      "w_um": 0.7,
+      "eta": 0.2016
+    },
+    {
+      "w_um": 1.0,
+      "eta": 0.2743
+    },
+    {
+      "w_um": 1.5,
+      "eta": 0.4695
+    },
+    {
+      "w_um": 2.0,
+      "eta": 0.6192
+    }
+  ],
+  "eta_vs_steer": [
+    {
+      "theta_deg": 0,
+      "eta": 0.2743
+    },
+    {
+      "theta_deg": 15,
+      "eta": 0.2641
+    },
+    {
+      "theta_deg": 30,
+      "eta": 0.2411
+    }
+  ]
+}
