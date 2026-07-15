@@ -1,0 +1,17 @@
+{
+  "uniform": {
+    "vars": "φ_n only (N−1=31)",
+    "worst_psll_db": 1.54,
+    "min_array_eff": 1.0,
+    "note": "d=3µm 가 성능을 이미 결정"
+  },
+  "nonuniform": {
+    "vars": "x_n (N−1=31), φ_n = 닫힌형",
+    "worst_psll_db": -11.39,
+    "min_array_eff": 1.0,
+    "aperture_um": 99.72,
+    "d_min_um": 2.026,
+    "d_max_um": 4.926
+  },
+  "delta_db": -12.93
+}
