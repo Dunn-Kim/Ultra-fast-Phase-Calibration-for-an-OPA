@@ -1,0 +1,14 @@
+{
+  "모델 일치": {
+    "frames": 2,
+    "recovery_mean": 0.3488,
+    "recovery_p10": 0.2026,
+    "recovery_min": 0.0385
+  },
+  "모델 불일치(실제=Gaussian×obliquity)": {
+    "frames": 2,
+    "recovery_mean": 0.1753,
+    "recovery_p10": 0.0372,
+    "recovery_min": 0.0021
+  }
+}
