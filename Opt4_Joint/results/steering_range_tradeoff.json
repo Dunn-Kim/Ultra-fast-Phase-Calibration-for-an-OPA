@@ -1,0 +1,44 @@
+{
+ "10": {
+  "uniform": -0.53,
+  "nonuniform": -13.9,
+  "gain": 13.37,
+  "mainlobe_at_tmax": 0.9594,
+  "aperture": 92.5
+ },
+ "20": {
+  "uniform": 0.53,
+  "nonuniform": -12.64,
+  "gain": 13.16,
+  "mainlobe_at_tmax": 0.8497,
+  "aperture": 98.4
+ },
+ "30": {
+  "uniform": 1.54,
+  "nonuniform": -11.47,
+  "gain": 13.01,
+  "mainlobe_at_tmax": 0.7013,
+  "aperture": 101.3
+ },
+ "40": {
+  "uniform": 2.52,
+  "nonuniform": -10.18,
+  "gain": 12.7,
+  "mainlobe_at_tmax": 0.5479,
+  "aperture": 101.7
+ },
+ "50": {
+  "uniform": 3.45,
+  "nonuniform": -8.92,
+  "gain": 12.37,
+  "mainlobe_at_tmax": 0.4147,
+  "aperture": 103.0
+ },
+ "60": {
+  "uniform": 4.87,
+  "nonuniform": -7.8,
+  "gain": 12.67,
+  "mainlobe_at_tmax": 0.3136,
+  "aperture": 101.5
+ }
+}

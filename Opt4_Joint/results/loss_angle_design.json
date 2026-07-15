@@ -1,0 +1,22 @@
+{
+ "5° 균일 (현행,13각)": {
+  "design_angles": 13,
+  "judged_worst_psll": -11.47
+ },
+ "10° 균일 (7각)": {
+  "design_angles": 7,
+  "judged_worst_psll": -11.44
+ },
+ "2.5° 균일 (25각)": {
+  "design_angles": 25,
+  "judged_worst_psll": -11.51
+ },
+ "가장자리만 (3각)": {
+  "design_angles": 3,
+  "judged_worst_psll": -11.45
+ },
+ "가장자리 집중 (7각)": {
+  "design_angles": 7,
+  "judged_worst_psll": -11.54
+ }
+}
