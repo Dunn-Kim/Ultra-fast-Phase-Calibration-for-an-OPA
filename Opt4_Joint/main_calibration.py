@@ -44,6 +44,11 @@ def calibrate_fast(cfg, model, x_frozen, shoot, frames=5, inner=250, lr=0.2, res
 
     프로브: 랜덤 U(−π,π). Hadamard 는 ±π/2 2값뿐이라 프레임당 다양성이 빈약해 오히려 열세
     (calib_probe_design.json 실측). 멀티스타트로 국소최소 회피.
+    식별성 요건: 프로브 간 랩 고려 평균 |Δp| ≳ 1 rad — 랜덤 프로브가 자동 보장.
+    (유사 프로브(예: 최적화 궤적 프레임)는 단일 프레임 위상복원 급으로 퇴화 — MODE 로그 실증.)
+
+    프레임별 강도 스케일 c_f 를 닫힌형 최소자승으로 동시 추정 — 실 카메라의 미지
+    게인/노출 대응 (스케일 불변 적합). 초기화는 협역 N(0,0.3)·광역 U(−π,π) 혼합.
 
     반환: 인가할 보정 위상 φ_a (= −ε̂). 하드웨어 변경 없음 — 위상만 조율.
     """
@@ -61,13 +66,17 @@ def calibrate_fast(cfg, model, x_frozen, shoot, frames=5, inner=250, lr=0.2, res
     best, best_loss = None, float('inf')
     for r in range(restarts):
         th.manual_seed(cfg.seed + r)
-        eh = (0.3 * th.randn(cfg.line_N, dtype=cfg.dtype)).requires_grad_(True)
+        eh = (0.3 * th.randn(cfg.line_N, dtype=cfg.dtype) if r % 2 == 0 else
+              2 * math.pi * th.rand(cfg.line_N, dtype=cfg.dtype) - math.pi).requires_grad_(True)
         opt = th.optim.Adam([eh], lr=lr)
         loss = None
         for _ in range(inner):
             opt.zero_grad()
-            loss = sum(((model.intensity(x_frozen, -(p + eh), model.u_train) - o) ** 2).mean()
-                       for p, o in zip(probes, obs))
+            loss = eh.new_zeros(())
+            for p, o in zip(probes, obs):
+                m = model.intensity(x_frozen, -(p + eh), model.u_train)
+                c = (m * o).sum() / (m * m).sum().clamp(min=1e-30)   # 프레임별 게인 (닫힌형)
+                loss = loss + ((c * m - o) ** 2).mean()
             loss.backward()
             opt.step()
         if loss.item() < best_loss:
