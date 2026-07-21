@@ -59,6 +59,17 @@ def multi_angle_worst_psll(model, s, beta, angles_deg, gamma=1.0, dphi=None):
     return th.logsumexp(gamma * stacked, dim=0) / gamma
 
 
+def coupling_penalty(model, d, weight=1.0):
+    # 커플링 페널티 (config: cpl_*) — 간격 분포의 "바닥 몰림" 벌점. d>d_min 하드 제약과 별개.
+    #   (a) 물리형: 전력 결합 ∝ exp(−γ·엣지갭) 의 총량 근사 (coupled-mode, γ는 포스터 하드웨어 유도)
+    #   (b) 장벽형: EF 적합 영역 밖(d<d_safe)에서만 켜지는 이차 softplus 장벽
+    # weight = 스윕용 전역 배율 (기본 1 = config 가중 그대로). 반환 단위 = dB 등가.
+    c = model.cfg
+    phys = th.exp(-c.cpl_gamma * (d - c.element_width)).mean()
+    barrier = th.nn.functional.softplus((c.cpl_d_safe - d) / c.cpl_tau).pow(2).mean()
+    return weight * (c.cpl_w_phys * phys + c.cpl_w_barrier * barrier)
+
+
 def beta_schedule(t, total, beta_start, beta_end):
     # 지수 어닐링: 초기엔 전 사이드로브 균등 억제, 후기엔 peak 집중
     frac = min(max(t / max(total, 1), 0.0), 1.0)

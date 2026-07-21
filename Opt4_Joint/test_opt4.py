@@ -198,6 +198,31 @@ def test_calibrate_fast():
     print(f'[9] 고속 캘리브레이션 OK (5프레임, 복원율 {rec:.4f} — REV는 155프레임에 0.968)')
 
 
+# 10. 커플링 페널티 — (a)물리+(b)장벽 혼합의 구조 불변식
+def test_coupling_penalty():
+    import torch as th
+    from config import JointConfig
+    from losses import coupling_penalty
+    from model import OPAModel
+    m = OPAModel(JointConfig())
+    d_floor = th.full((31,), 2.05, dtype=th.float64)
+    d_safe = th.full((31,), 2.5, dtype=th.float64)
+    d_wide = th.full((31,), 3.0, dtype=th.float64)
+    p_floor = coupling_penalty(m, d_floor).item()
+    p_safe = coupling_penalty(m, d_safe).item()
+    p_wide = coupling_penalty(m, d_wide).item()
+    # 단조성: 바닥 몰림일수록 벌점 큼 + 장벽(2.3µm) 밖에선 물리항 잔량만 남아 급감
+    assert p_floor > p_safe > p_wide > 0.0
+    assert p_floor > 10 * p_safe, f'장벽 구간 대비 바닥 벌점이 약함 ({p_floor:.3f} vs {p_safe:.3f})'
+    # weight=0 → 완전 무효(기존 손실 보존 경로)
+    assert coupling_penalty(m, d_floor, weight=0.0).item() == 0.0
+    # 간격 변수로 gradient 흐름 (설계 루프 연동 가능성)
+    s = th.zeros(31, dtype=th.float64, requires_grad=True)
+    coupling_penalty(m, m.gaps(s)).backward()
+    assert s.grad is not None and s.grad.abs().sum() > 0
+    print(f'[10] 커플링 페널티 OK (바닥 {p_floor:.2f} > 안전 {p_safe:.3f} > 광폭 {p_wide:.4f} dB등가, grad 흐름)')
+
+
 if __name__ == '__main__':
     test_legacy_identity()
     test_gradcheck()
@@ -208,4 +233,5 @@ if __name__ == '__main__':
     test_runtime()
     test_graybox_ef()
     test_calibrate_fast()
+    test_coupling_penalty()
     print('\n전체 테스트 통과')

@@ -34,6 +34,19 @@ class JointConfig:
     w_sll_ramp_epochs: int = 100
     eps: float = 1e-12
 
+    # 커플링 페널티 — (a)물리형 + (b)장벽형 혼합. d>2µm 하드 금지(sigmoid 박스)는 그대로 두고,
+    # 그 위에서 "바닥 몰림"만 벌점화해 EF 적합 영역(d=3 등간격) 쪽으로 분포를 되민다.
+    #   P(d) = w_phys·mean_n exp(−γ·(d_n−w)) + w_barrier·mean_n softplus((d_safe−d_n)/τ)²  [dB 등가]
+    #   γ = 2·k0·√(n_eff²−n_clad²) ≈ 5.6 /µm — 포스터 하드웨어(λ=1.55, SiN 1.97 코어 1.0×0.5µm,
+    #   SiO₂ 1.44 클래드)에서 n_eff≈1.6 가정으로 유도한 전력 결합 감쇠율. MODE 1회 검증 시 캘리브레이션 대상.
+    #   가중 기본값 = experiment_coupling_penalty.py 스윕(기저 300/0.2)의 무릎점 λ=4 반영:
+    #   <2.2µm 간격 0개(미검증 영역 완전 탈출), xtalk 프록시 −28.2→−35.9 dB, PSLL 비용 1.12 dB.
+    cpl_gamma: float = 5.6     # /µm (엣지갭 d−w 기준)
+    cpl_d_safe: float = 2.3    # µm — 장벽 시작점 (적합 영역 여유)
+    cpl_tau: float = 0.1       # µm — 장벽 연화폭
+    cpl_w_phys: float = 1200.0
+    cpl_w_barrier: float = 0.8
+
     # 최적화 (수정 Adam: torch.optim.Adam, 이중 bias-correction 버그 없음)
     lr_phase: float = 3e-2     # rad 스케일
     lr_spacing: float = 1e-2   # sigmoid 로짓 스케일
