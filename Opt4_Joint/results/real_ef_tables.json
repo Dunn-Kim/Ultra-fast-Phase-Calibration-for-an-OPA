@@ -1,0 +1,73 @@
+{
+  "ceiling_deg": {
+    "sinc_legacy": {
+      ">=90%": 16.0,
+      ">=80%": 23.5,
+      ">=70%": 30.1,
+      ">=50%": 43.4,
+      ">=30%": 61.7
+    },
+    "mode_fitted": {
+      ">=90%": 8.4,
+      ">=80%": 12.3,
+      ">=70%": 15.6,
+      ">=50%": 22.1,
+      ">=30%": 29.8
+    }
+  },
+  "design": {
+    "pm10": {
+      "worst_psll_db": -16.75,
+      "uniform_psll_db": -1.87,
+      "gain_db": 14.88,
+      "min_af_eff": 1.0,
+      "aperture_um": 81.2,
+      "d_range_um": [
+        2.013,
+        4.366
+      ]
+    },
+    "pm15": {
+      "worst_psll_db": -14.41,
+      "uniform_psll_db": 0.01,
+      "gain_db": 14.42,
+      "min_af_eff": 1.0,
+      "aperture_um": 79.9,
+      "d_range_um": [
+        2.017,
+        4.064
+      ]
+    },
+    "pm20": {
+      "worst_psll_db": -12.4,
+      "uniform_psll_db": 1.85,
+      "gain_db": 14.25,
+      "min_af_eff": 1.0,
+      "aperture_um": 83.4,
+      "d_range_um": [
+        2.006,
+        4.242
+      ]
+    },
+    "pm30": {
+      "worst_psll_db": -8.24,
+      "uniform_psll_db": 5.28,
+      "gain_db": 13.52,
+      "min_af_eff": 1.0,
+      "aperture_um": 102.5,
+      "d_range_um": [
+        2.01,
+        4.884
+      ]
+    }
+  },
+  "ef": {
+    "oblq_p": 0.318,
+    "gcoef": [
+      -1.635,
+      0.2805,
+      0.3745
+    ],
+    "source": "Opt3_Back_Forward/Resultants varFDTD 로그 적합 (N전이 R²0.996)"
+  }
+}
