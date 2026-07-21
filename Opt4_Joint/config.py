@@ -15,13 +15,17 @@ class JointConfig:
     d_max: float = 5.0         # µm (개구 상한 = (N-1)*d_max 구조 보장)
     theta_target_deg: float = 0.0
 
-    # 소자인자 EF 보정 (gray-box model-discrepancy). 기본값 = 무보정(top-hat sinc, 기존과 동일).
+    # 소자인자 EF 보정 (gray-box model-discrepancy).
     #   EF(u) = sinc(w_eff·u/λ) · (1−u²)^(p/2) · exp(a1·u²+a2·u⁴+a3·u⁶)
     #   ├ w_eff: 유효 개구폭[µm] (None=element_width)  ├ oblq_p: obliquity 지수 (0=없음, 1=cosθ)
     #   └ ef_gcoef: 짝수 다항 잔차 계수 (관측회귀로만 학습 — PSLL과 분리). g(0)=0 구조 보존.
+    # 기본값 = 실 MODE(varFDTD) 적합치. Opt3_Back_Forward/Resultants 의 위상↔패턴 로그
+    #   (N=32 100쌍)로 적합, N=64/128 홀드아웃 R² 0.996 전이 검증. 강도 배율
+    #   g_I(u)=(1−u²)^0.318·exp(−3.27u²+0.561u⁴+0.749u⁶) → 진폭 계수는 그 절반.
+    #   순수 sinc(구 기본값)로 되돌리려면 ef_oblq_p=0.0, ef_gcoef=(0,0,0).
     ef_w_eff: float = None
-    ef_oblq_p: float = 0.0
-    ef_gcoef: tuple = (0.0, 0.0, 0.0)
+    ef_oblq_p: float = 0.318
+    ef_gcoef: tuple = (-1.635, 0.2805, 0.3745)
 
     # 손실
     guard_kappa: float = 2.0   # 주엽 가드밴드 Δ = κ·λ/L_ap

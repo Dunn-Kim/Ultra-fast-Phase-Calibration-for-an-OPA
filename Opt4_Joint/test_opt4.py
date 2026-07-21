@@ -18,8 +18,9 @@ def small_cfg(**kw):
 
 
 # 1. 항등성 회귀 — x_n = n·3µm, φ=0 에서 기존 Opt1 수식과 rtol 1e-9 일치
+#    (Opt1 은 순수 sinc 규약 → EF 보정을 끈 config 로 비교)
 def test_legacy_identity():
-    cfg = JointConfig()
+    cfg = JointConfig(ef_oblq_p=0.0, ef_gcoef=(0.0, 0.0, 0.0))
     model = OPAModel(cfg)
     x = model.uniform_positions()          # n·3µm
     phi = th.zeros(cfg.line_N, dtype=cfg.dtype)
@@ -87,7 +88,8 @@ def test_performance_gate():
                    s=joint['s'])
     print(f"    baseline PSLL {mb['psll_db']:+.2f} dB / joint PSLL {mj['psll_db']:+.2f} dB "
           f"/ 주엽 {mj['main_lobe_I']:.3f}")
-    assert mb['psll_db'] > -3.0, 'baseline은 grating lobe 때문에 PSLL ≈ −1.65 dB여야 함'
+    # 등간격 d=3 grating lobe: sinc 규약 −1.65 dB + MODE 적합 g(31°)=0.402(−3.96 dB) ≈ −5.6 dB
+    assert -7.0 < mb['psll_db'] < -4.0, 'baseline PSLL ≈ −5.6 dB (GL × MODE 적합 EF)여야 함'
     assert mj['psll_db'] <= mb['psll_db'] - 8.0, '단일 시드 joint 억제량 ≥ 8 dB 기대'
     assert mj['main_lobe_I'] >= 0.8, '주엽 효율 ≥ 0.8'
     assert mj['min_gap_um'] >= cfg.d_min - 1e-9
@@ -145,22 +147,29 @@ def test_runtime():
     print(f'[7] 런타임 스모크 OK ({dt:.1f} s / 650 epoch)')
 
 
-# 8. Gray-box EF 보정 — 기본값 항등 + 구조항 g(0)=0 불변식
+# 8. Gray-box EF 보정 — 기본값 = 실 MODE 적합치 + 구조 불변식
 def test_graybox_ef():
+    import math
     import torch as th
     from config import JointConfig
     from model import OPAModel
     u = th.sin(th.deg2rad(th.tensor([0., 20, 45, 89], dtype=th.float64)))
-    # 기본 config(무보정) = 기존 top-hat sinc
-    m0 = OPAModel(JointConfig())
+    # ef_oblq_p=0, gcoef=0 → 기존 top-hat sinc (레거시 브리지)
+    m0 = OPAModel(JointConfig(ef_oblq_p=0.0, ef_gcoef=(0.0, 0.0, 0.0)))
     assert th.allclose(m0.element_factor_amp(u), th.sinc(1.0 * u / 1.55), rtol=1e-12)
+    # 기본 config = MODE 적합 g(u) — fit_ef_mode 적합치 재현 (강도 배율)
+    md = OPAModel(JointConfig())
+    for deg, g_ref in ((10.0, 0.898), (20.0, 0.662), (31.0, 0.402), (60.0, 0.104)):
+        uu = th.tensor([math.sin(math.radians(deg))], dtype=th.float64)
+        g = (md.element_factor_amp(uu) ** 2 / m0.element_factor_amp(uu) ** 2).item()
+        assert abs(g - g_ref) < 5e-3, f'{deg}°: g={g:.3f} ≠ {g_ref}'
     # obliquity 구조항: |u|→1서 EF→0 (꼬리 발산 차단)
     m1 = OPAModel(JointConfig(ef_oblq_p=1.0))
     assert m1.element_factor_amp(th.tensor([0.9999], dtype=th.float64)).item() < 0.02
     # g(0)=0 보존 (주엽 게이지) — 임의 g계수에도 broadside EF = 1
     m2 = OPAModel(JointConfig(ef_oblq_p=1.0, ef_gcoef=(-0.5, 0.4, -0.1)))
     assert abs(m2.element_factor_amp(th.tensor([0.0], dtype=th.float64)).item() - 1.0) < 1e-12
-    print('[8] gray-box EF OK (기본 항등, obliquity 꼬리→0, g(0)=0 게이지)')
+    print('[8] gray-box EF OK (기본값=MODE 적합, sinc 브리지, 꼬리→0, g(0)=0)')
 
 
 # 9. 고속 캘리브레이션 — 카메라 프레임 5장으로 주엽 복원 (ε 미지, 실칩 인터페이스)
