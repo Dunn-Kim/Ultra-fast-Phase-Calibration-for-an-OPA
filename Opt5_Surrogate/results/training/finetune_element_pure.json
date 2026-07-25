@@ -1,0 +1,31 @@
+{
+  "tag": "element_pure",
+  "ckpt": "checkpoints/elem_smoke.pt",
+  "variant": "pure",
+  "steps": 2000,
+  "lr": 0.0001,
+  "replay_w": 0.0,
+  "best_step": 1400,
+  "elapsed_s": 57.4,
+  "pre": {
+    "sign": 1,
+    "r2_all": 0.9964110930550603,
+    "r2_train": 0.9964101127466037,
+    "r2_holdout": 0.9964150142888857
+  },
+  "post": {
+    "r2_all": 0.9964183194121725,
+    "r2_train": 0.9964175999743382,
+    "r2_holdout": 0.9964211971635091
+  },
+  "formula_pre": {
+    "field_rmse": 2.3081483506923113e-05,
+    "int_r2": 0.9999999144312337,
+    "psll_err_db": 0.00023995342532563208
+  },
+  "formula_post": {
+    "field_rmse": 0.005900128506451964,
+    "int_r2": 0.9892647028989825,
+    "psll_err_db": 0.07269518225917829
+  }
+}

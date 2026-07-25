@@ -1,0 +1,31 @@
+{
+  "tag": "mlp_replay",
+  "ckpt": "checkpoints/mlp_full.pt",
+  "variant": "replay",
+  "steps": 2000,
+  "lr": 0.0001,
+  "replay_w": 1.0,
+  "best_step": 1950,
+  "elapsed_s": 85.9,
+  "pre": {
+    "sign": 1,
+    "r2_all": 0.993872895423218,
+    "r2_train": 0.993777063103568,
+    "r2_holdout": 0.9942562247018178
+  },
+  "post": {
+    "r2_all": 0.9999977645571414,
+    "r2_train": 0.9999977296632568,
+    "r2_holdout": 0.9999979041326797
+  },
+  "formula_pre": {
+    "field_rmse": 0.014336906826713677,
+    "int_r2": 0.9969543744348375,
+    "psll_err_db": 0.21570180331226851
+  },
+  "formula_post": {
+    "field_rmse": 0.015688106075021236,
+    "int_r2": 0.994750721122475,
+    "psll_err_db": 0.24167672846286806
+  }
+}
