@@ -1,0 +1,485 @@
+{
+  "protocol": {
+    "design_angles_deg": [
+      0.0,
+      7.5,
+      -7.5,
+      15.0,
+      -15.0
+    ],
+    "guard": "kappa=2·lambda/L_ap",
+    "isl": "Δu 가중 적분, 가드밴드 밖 전부",
+    "eta_main": "I(u0)/EF(u0)² (동상합 상한 대비)",
+    "keep": "I(u0)/I(0°) [dB]"
+  },
+  "rows": [
+    {
+      "label": "uniform d=3 (기준선)",
+      "track": "-",
+      "time_s": 0.0,
+      "gens": 0,
+      "n_formula_eval": 0,
+      "note": "설계 없음",
+      "psll_worst_db": -0.009,
+      "psll_per_angle": [
+        -5.63,
+        -2.81,
+        -2.81,
+        -0.01,
+        -0.01
+      ],
+      "isl_worst_db": 1.092,
+      "isl_mean_db": -0.387,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.0164,
+      "J": 0.007,
+      "min_gap_um": 3.0,
+      "aperture_um": 93.0
+    },
+    {
+      "label": "GA (대체 대상)",
+      "track": "GA",
+      "time_s": 24.4,
+      "gens": 400,
+      "n_formula_eval": 128000,
+      "note": "pop64×400세대",
+      "psll_worst_db": -11.173,
+      "psll_per_angle": [
+        -13.4,
+        -13.25,
+        -13.25,
+        -11.17,
+        -11.17
+      ],
+      "isl_worst_db": 2.334,
+      "isl_mean_db": 1.15,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.6,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.5965,
+      "J": -10.576,
+      "min_gap_um": 2.031,
+      "aperture_um": 108.4
+    },
+    {
+      "label": "① main Opt4 (배치 Adam)",
+      "track": "1",
+      "time_s": 38.1,
+      "gens": 400,
+      "n_formula_eval": 128000,
+      "note": "64재시작×400ep",
+      "psll_worst_db": -13.265,
+      "psll_per_angle": [
+        -17.7,
+        -15.62,
+        -15.62,
+        -13.26,
+        -13.26
+      ],
+      "isl_worst_db": 0.768,
+      "isl_mean_db": -0.644,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.3691,
+      "J": -12.896,
+      "min_gap_um": 2.298,
+      "aperture_um": 92.1
+    },
+    {
+      "label": "① 400ep (GA예산 강제)",
+      "track": "1",
+      "time_s": 41.12,
+      "gens": 400,
+      "n_formula_eval": 137500,
+      "note": "예산 과다 — GA 시간 위반",
+      "psll_worst_db": -13.659,
+      "psll_per_angle": [
+        -16.94,
+        -15.52,
+        -15.52,
+        -13.66,
+        -13.66
+      ],
+      "isl_worst_db": 1.518,
+      "isl_mean_db": 0.211,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.6,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.2866,
+      "J": -13.372,
+      "min_gap_um": 2.266,
+      "aperture_um": 102.1
+    },
+    {
+      "label": "① 150ep",
+      "track": "1",
+      "time_s": 17.22,
+      "gens": 150,
+      "n_formula_eval": 57500,
+      "note": "",
+      "psll_worst_db": -13.349,
+      "psll_per_angle": [
+        -17.44,
+        -15.61,
+        -15.61,
+        -13.35,
+        -13.35
+      ],
+      "isl_worst_db": 1.083,
+      "isl_mean_db": -0.271,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.4297,
+      "J": -12.92,
+      "min_gap_um": 2.229,
+      "aperture_um": 95.4
+    },
+    {
+      "label": "① 30ep PSLL단독 (개선전)",
+      "track": "1",
+      "time_s": 5.55,
+      "gens": 30,
+      "n_formula_eval": 19040,
+      "note": "w_isl=0",
+      "psll_worst_db": -13.32,
+      "psll_per_angle": [
+        -17.3,
+        -15.46,
+        -15.46,
+        -13.32,
+        -13.32
+      ],
+      "isl_worst_db": 0.904,
+      "isl_mean_db": -0.485,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.4271,
+      "J": -12.893,
+      "min_gap_um": 2.206,
+      "aperture_um": 94.5
+    },
+    {
+      "label": "① 챔피언 (+ISL항)",
+      "track": "1",
+      "time_s": 6.31,
+      "gens": 30,
+      "n_formula_eval": 19040,
+      "note": "w_isl=1.0, barrier 3.0",
+      "psll_worst_db": -13.351,
+      "psll_per_angle": [
+        -17.63,
+        -15.53,
+        -15.53,
+        -13.35,
+        -13.35
+      ],
+      "isl_worst_db": 0.559,
+      "isl_mean_db": -0.893,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.4158,
+      "J": -12.936,
+      "min_gap_um": 2.289,
+      "aperture_um": 90.7
+    },
+    {
+      "label": "② IMP1 (Adam탐색+LBFGS)",
+      "track": "2",
+      "time_s": 13.34,
+      "gens": 500,
+      "n_formula_eval": 10520,
+      "note": "탐색 256×500",
+      "psll_worst_db": -13.402,
+      "psll_per_angle": [
+        -17.19,
+        -15.29,
+        -15.29,
+        -13.4,
+        -13.4
+      ],
+      "isl_worst_db": 1.641,
+      "isl_mean_db": 0.36,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.6,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.3187,
+      "J": -13.083,
+      "min_gap_um": 2.262,
+      "aperture_um": 102.6
+    },
+    {
+      "label": "② IMP4 CMA 250세대",
+      "track": "2",
+      "time_s": 6.77,
+      "gens": 250,
+      "n_formula_eval": 6240,
+      "note": "8아일랜드×pop32",
+      "psll_worst_db": -13.48,
+      "psll_per_angle": [
+        -16.85,
+        -15.37,
+        -15.37,
+        -13.48,
+        -13.48
+      ],
+      "isl_worst_db": 0.939,
+      "isl_mean_db": -0.43,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.4821,
+      "J": -12.998,
+      "min_gap_um": 2.209,
+      "aperture_um": 96.2
+    },
+    {
+      "label": "② IMP4 CMA 60세대",
+      "track": "2",
+      "time_s": 3.29,
+      "gens": 60,
+      "n_formula_eval": 5000,
+      "note": "6아일랜드×pop32",
+      "psll_worst_db": -13.205,
+      "psll_per_angle": [
+        -16.56,
+        -14.89,
+        -14.89,
+        -13.21,
+        -13.21
+      ],
+      "isl_worst_db": 1.785,
+      "isl_mean_db": 0.535,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.6,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.4313,
+      "J": -12.774,
+      "min_gap_um": 2.23,
+      "aperture_um": 104.5
+    },
+    {
+      "label": "② tandem PSLL단독 (개선전)",
+      "track": "2",
+      "time_s": 0.32,
+      "gens": 0,
+      "n_formula_eval": 805,
+      "note": "w_isl=0, 학습 27.3s 상각",
+      "psll_worst_db": -13.365,
+      "psll_per_angle": [
+        -17.07,
+        -15.21,
+        -15.21,
+        -13.36,
+        -13.36
+      ],
+      "isl_worst_db": 1.257,
+      "isl_mean_db": -0.078,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.349,
+      "J": -13.016,
+      "min_gap_um": 2.258,
+      "aperture_um": 101.0
+    },
+    {
+      "label": "② 챔피언 tandem (+ISL항)",
+      "track": "2",
+      "time_s": 0.38,
+      "gens": 0,
+      "n_formula_eval": 950,
+      "note": "w_isl=0.4, 학습 27.7s 상각, 추론 0.17ms",
+      "psll_worst_db": -13.553,
+      "psll_per_angle": [
+        -17.56,
+        -15.7,
+        -15.7,
+        -13.55,
+        -13.55
+      ],
+      "isl_worst_db": 0.772,
+      "isl_mean_db": -0.619,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.5772,
+      "J": -12.976,
+      "min_gap_um": 2.246,
+      "aperture_um": 95.7
+    }
+  ]
+}

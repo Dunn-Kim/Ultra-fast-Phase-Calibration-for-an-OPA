@@ -1,0 +1,54 @@
+{
+  "status": "완결 — 2026-07-22 재개, element 2k 완주 후 판정 확정",
+  "protocol": {
+    "train": "스트리밍 수식 타깃 (배치 512, 신선 샘플)",
+    "val": "수식 홀드아웃 팩 4096 (시드 분리)",
+    "psll_metric": "조향 전용 팩 512 (φ=φ*, u0∈±0.5 균등)",
+    "device": "mps (M3 Pro GPU)"
+  },
+  "mlp_full": {
+    "steps": 20000,
+    "params_M": 7.46,
+    "elapsed_s": 2003.3,
+    "final": {
+      "field_rmse": 0.014336906342966634,
+      "int_r2": 0.9969543744251587,
+      "psll_err_db": 0.21570108112739067
+    },
+    "target_psll_err_db": 0.3,
+    "target_met": true,
+    "ckpt": "checkpoints/mlp_full.pt"
+  },
+  "element_full": {
+    "steps": 2000,
+    "params_M": 0.07,
+    "elapsed_s": 217.6,
+    "final": {
+      "field_rmse": 5.540069549586276e-07,
+      "int_r2": 0.9999999999957907,
+      "psll_err_db": 6.542614225330109e-06
+    },
+    "note": "구조상 zero-init 항등에서 출발, 2k 스텝 학습에도 드리프트 없음 (loss ~1.5e-13 평탄)",
+    "ckpt": "checkpoints/element_full.pt"
+  },
+  "inference_bench": {
+    "batch": 1024,
+    "note": "1 design = 1801점 패턴 1회 평가, designs/s",
+    "formula_cpu_f64": 5633,
+    "mlp_cpu_f32": 71149,
+    "mlp_mps_f32": 216056,
+    "element_cpu_f32": 8285,
+    "element_mps_f32": 11647,
+    "mlp_speedup_vs_formula": 38.4
+  },
+  "mode_test_context": {
+    "formula_vs_mode_r2": 0.9964,
+    "ft_headroom": "기존 pure FT 실험: R² +0.00007 — 현행 수식(MODE-적합 EF)이 d=3 로그 이미 설명, 잔차 0.36%",
+    "limitation": "MODE 로그는 d=3 등간격뿐 — 간격 의존 보정 일반화는 신규 MODE 런 필요"
+  },
+  "decision_axes": {
+    "mlp": "속도 38× (MPS), 목표 오차 달성 (0.216 dB < 0.3), FT 자유도 최대 / 약점: off-manifold 악용 위험, N=32 고정(재학습 ~33분/N)",
+    "element": "근사 오차 ≈ 0 보장, N-agnostic (MODE 64/128 로그 FT 활용 가능), 악용 위험 0 / 약점: 속도 이득 ~1.5–2×뿐",
+    "verdict": "주 서러게이트 = MLP (mlp_full: 목표 오차 통과 0.216<0.3 dB + MPS 38×) / element = 검증기 (수식 항등 — 최적화 결과 off-manifold 감시, 멀티-N FT 예비). P5 gap_db가 MLP 채택 유지 게이트"
+  }
+}

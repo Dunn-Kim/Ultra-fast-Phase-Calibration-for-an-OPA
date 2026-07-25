@@ -1,0 +1,24 @@
+{
+  "batch": 1024,
+  "note": "1 design = 1801점 패턴 1회 평가",
+  "formula_cpu_f64": {
+    "ms_per_batch": 181.8,
+    "designs_per_s": 5633
+  },
+  "mlp_cpu_f32": {
+    "ms_per_batch": 14.4,
+    "designs_per_s": 71149
+  },
+  "mlp_mps_f32": {
+    "ms_per_batch": 4.7,
+    "designs_per_s": 216056
+  },
+  "element_cpu_f32": {
+    "ms_per_batch": 123.6,
+    "designs_per_s": 8285
+  },
+  "element_mps_f32": {
+    "ms_per_batch": 87.9,
+    "designs_per_s": 11647
+  }
+}
