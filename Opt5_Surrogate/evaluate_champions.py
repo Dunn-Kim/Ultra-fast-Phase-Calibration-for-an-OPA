@@ -20,7 +20,8 @@ import numpy as np
 import torch as th
 
 from physics_oracle import PhysicsOracle
-from opt_core import (DESIGN_ANGLES_DEG, coupling_penalty_d, batched_phi_star)
+from opt_core import (DESIGN_ANGLES_DEG, coupling_penalty_d, batched_phi_star,
+                      mc_psll, u0_vector)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -106,6 +107,9 @@ CANDIDATES = [
     ('② tandem PSLL단독 (개선전)', '2',
      'results/experiments/final_spacing_imp6_tandem_pm15_single.csv', 0.32, 0, 805,
      'w_isl=0, 학습 27.3s 상각'),
+    ('① 로버스트 변형 (K=24)', '1',
+     'results/final_spacing_champion_track1_robust.csv', 68.9, 30, 19040,
+     '연마만 로버스트, MC 선택'),
     ('② 챔피언 tandem (+ISL항)', '2',
      'results/final_spacing_champion_tandem_pm15.csv', 0.38, 0, 950,
      'w_isl=0.4, 학습 27.7s 상각, 추론 0.17ms'),
@@ -115,6 +119,8 @@ CANDIDATES = [
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--tag', default='champion_evaluation')
+    ap.add_argument('--mc', type=int, default=0, metavar='N',
+                    help='제조·구동 오차 하 PSLL 분포를 N회 몬테카를로로 병기')
     a = ap.parse_args()
     oracle = PhysicsOracle()
     jc = oracle.jcfg
@@ -128,6 +134,11 @@ def main():
                 continue
             d = th.tensor(np.loadtxt(p, skiprows=1), dtype=th.float64)
         m = metrics(oracle, d)
+        if a.mc:                       # 공칭이 아닌 '실제 기대 성능'
+            v = mc_psll(oracle, d, u0_vector(), n=a.mc)
+            m.update(mc_mean_db=round(float(v.mean()), 2),
+                     mc_p90_db=round(float(v.quantile(0.9)), 2),
+                     mc_worst_db=round(float(v.max()), 2))
         rows.append(dict(label=label, track=track, time_s=t_s, gens=gens,
                          n_formula_eval=n_ev, note=note, **m))
 
@@ -141,8 +152,9 @@ def main():
     with open(jp, 'w') as f:
         json.dump(out, f, indent=2, ensure_ascii=False)
 
+    mc_h = f" {'오차p90':>8s}" if a.mc else ''
     hdr = (f"{'후보':30s} {'trk':>3s} {'PSLL':>8s} {'ISL':>8s} {'HPBW':>6s} "
-           f"{'η':>6s} {'유지':>7s} {'J':>8s} {'시간':>8s} {'세대':>6s} "
+           f"{'η':>6s} {'유지':>7s} {'J':>8s}{mc_h} {'시간':>8s} {'세대':>6s} "
            f"{'수식평가':>9s}")
     print(hdr)
     print('-' * len(hdr))
@@ -151,7 +163,8 @@ def main():
               f"{r['psll_worst_db']:8.2f} {r['isl_worst_db']:8.2f} "
               f"{r['hpbw_deg']:6.2f} "
               f"{r['eta_main_worst']:6.3f} {r['keep_outer_db']:7.2f} "
-              f"{r['J']:8.2f} "
+              f"{r['J']:8.2f}"
+              f"{(' %8.2f' % r['mc_p90_db']) if a.mc else ''} "
               f"{(r['time_s'] if r['time_s'] is not None else -1):8.2f} "
               f"{(r['gens'] if r['gens'] is not None else -1):6d} "
               f"{(r['n_formula_eval'] if r['n_formula_eval'] is not None else -1):9d}")

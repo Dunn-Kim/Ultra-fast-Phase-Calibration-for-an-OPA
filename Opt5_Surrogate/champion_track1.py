@@ -19,7 +19,7 @@ import torch as th
 from physics_oracle import PhysicsOracle
 from opt_core import (u0_vector, formula_hard_per_restart, run_gradient,
                       diverse_topk, d_to_logit, polish_lbfgs,
-                      coupling_penalty_d)
+                      coupling_penalty_d, mc_psll)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,6 +35,11 @@ def main():
                     help='사이드로브 총에너지(ISL) 항 가중 — 0이면 PSLL 단독')
     ap.add_argument('--w-barrier', type=float, default=3.0,
                     help='커플링 barrier 가중 (ISL 항의 하한 압력 상쇄)')
+    ap.add_argument('--robust', type=int, default=0, metavar='K',
+                    help='연마 단계를 오차 실현 K개의 기대 손실로 수행 (0=공칭)')
+    ap.add_argument('--robust-explore', action='store_true',
+                    help='탐색 단계까지 로버스트화 — 실측상 역효과(공칭 0.54 dB '
+                         '손실이 이득을 상쇄)라 기본 비활성. 재현용으로만 남김')
     ap.add_argument('--tag', default='champion_track1')
     a = ap.parse_args()
 
@@ -50,30 +55,46 @@ def main():
         return oracle.intensity(dRA, phi)
 
     t0 = time.perf_counter()
+    # 탐색은 공칭으로 — 노이즈를 넣으면 경사가 흐려져 좋은 분지를 놓친다(실측)
     d_x, t_x, n_x = run_gradient(eval_I_f, th.float64, 'cpu', oracle,
                                  a.restarts, a.epochs, a.lr, True, a.seed,
-                                 oracle.u, w_isl=a.w_isl)
+                                 oracle.u, w_isl=a.w_isl,
+                                 robust_k=a.robust if a.robust_explore else 0)
     t1 = time.perf_counter()
     p_rank = formula_hard_per_restart(oracle, d_x, u0_vec)
     top = diverse_topk(d_x, p_rank, a.top_k)
     t_rank = time.perf_counter() - t1
     n_rank = d_x.shape[0] * u0_vec.shape[0]
     d_p, t_p, n_p = polish_lbfgs(oracle, d_to_logit(d_x[top], jc), jc, u0_vec,
-                                 w_isl=a.w_isl)
+                                 w_isl=a.w_isl, robust_k=a.robust,
+                                 seed=a.seed)
     p_fin = formula_hard_per_restart(oracle, d_p, u0_vec)
     n_judge = d_p.shape[0] * u0_vec.shape[0]
     jc.cpl_w_barrier = w_barrier_judge          # 판정 기준 원복
     J = [float(p_fin[i]) + float(coupling_penalty_d(d_p[i], jc))
          for i in range(d_p.shape[0])]
-    pick = int(np.argmin(J))          # J 기준 선택 (IMP5 회계)
+    if a.robust:
+        # 로버스트 모드에서는 선택 기준도 오차 하 성능이어야 일관된다
+        # (공칭 J 로 고르면 로버스트 연마의 이득이 선택 단계에서 버려진다)
+        score = [float(mc_psll(oracle, d_p[i], u0_vec, n=120).quantile(0.9))
+                 + float(coupling_penalty_d(d_p[i], jc))
+                 for i in range(d_p.shape[0])]
+        pick = int(np.argmin(score))
+    else:
+        pick = int(np.argmin(J))      # J 기준 선택 (IMP5 회계)
     d_c = d_p[pick]
     t_total = time.perf_counter() - t0
 
+    mc = mc_psll(oracle, d_c, u0_vec)          # 오차 하 실제 기대 성능
     out = dict(tag=a.tag, track='1_formula_direct',
                recipe=dict(restarts=a.restarts, epochs=a.epochs, lr=a.lr,
                            top_k=a.top_k, polish='lbfgs', judge='J',
-                           w_isl=a.w_isl),
+                           w_isl=a.w_isl, robust_k=a.robust,
+                           robust_explore=a.robust_explore),
                psll_formula_db=float(p_fin[pick]),
+               mc=dict(mean=round(float(mc.mean()), 3),
+                       p90=round(float(mc.quantile(0.9)), 3),
+                       worst=round(float(mc.max()), 3)),
                coupling_penalty=round(float(coupling_penalty_d(d_c, jc)), 4),
                J=round(J[pick], 3),
                elapsed_s=round(t_total, 2),

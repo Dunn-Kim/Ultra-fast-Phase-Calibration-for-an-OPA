@@ -50,7 +50,10 @@
       "coupling_penalty": 0.0164,
       "J": 0.007,
       "min_gap_um": 3.0,
-      "aperture_um": 93.0
+      "aperture_um": 93.0,
+      "mc_mean_db": -0.08,
+      "mc_p90_db": -0.02,
+      "mc_worst_db": 0.02
     },
     {
       "label": "GA (대체 대상)",
@@ -89,7 +92,10 @@
       "coupling_penalty": 0.5965,
       "J": -10.576,
       "min_gap_um": 2.031,
-      "aperture_um": 108.4
+      "aperture_um": 108.4,
+      "mc_mean_db": -10.53,
+      "mc_p90_db": -9.86,
+      "mc_worst_db": -8.59
     },
     {
       "label": "① main Opt4 (배치 Adam)",
@@ -128,7 +134,10 @@
       "coupling_penalty": 0.3691,
       "J": -12.896,
       "min_gap_um": 2.298,
-      "aperture_um": 92.1
+      "aperture_um": 92.1,
+      "mc_mean_db": -11.85,
+      "mc_p90_db": -11.26,
+      "mc_worst_db": -10.48
     },
     {
       "label": "① 400ep (GA예산 강제)",
@@ -167,7 +176,10 @@
       "coupling_penalty": 0.2866,
       "J": -13.372,
       "min_gap_um": 2.266,
-      "aperture_um": 102.1
+      "aperture_um": 102.1,
+      "mc_mean_db": -12.14,
+      "mc_p90_db": -11.58,
+      "mc_worst_db": -10.61
     },
     {
       "label": "① 150ep",
@@ -206,7 +218,10 @@
       "coupling_penalty": 0.4297,
       "J": -12.92,
       "min_gap_um": 2.229,
-      "aperture_um": 95.4
+      "aperture_um": 95.4,
+      "mc_mean_db": -11.88,
+      "mc_p90_db": -11.28,
+      "mc_worst_db": -10.46
     },
     {
       "label": "① 30ep PSLL단독 (개선전)",
@@ -245,7 +260,10 @@
       "coupling_penalty": 0.4271,
       "J": -12.893,
       "min_gap_um": 2.206,
-      "aperture_um": 94.5
+      "aperture_um": 94.5,
+      "mc_mean_db": -11.86,
+      "mc_p90_db": -11.26,
+      "mc_worst_db": -10.59
     },
     {
       "label": "① 챔피언 (+ISL항)",
@@ -284,7 +302,10 @@
       "coupling_penalty": 0.4158,
       "J": -12.936,
       "min_gap_um": 2.289,
-      "aperture_um": 90.7
+      "aperture_um": 90.7,
+      "mc_mean_db": -11.81,
+      "mc_p90_db": -11.18,
+      "mc_worst_db": -10.45
     },
     {
       "label": "② IMP1 (Adam탐색+LBFGS)",
@@ -323,7 +344,10 @@
       "coupling_penalty": 0.3187,
       "J": -13.083,
       "min_gap_um": 2.262,
-      "aperture_um": 102.6
+      "aperture_um": 102.6,
+      "mc_mean_db": -11.75,
+      "mc_p90_db": -11.15,
+      "mc_worst_db": -10.48
     },
     {
       "label": "② IMP4 CMA 250세대",
@@ -362,7 +386,10 @@
       "coupling_penalty": 0.4821,
       "J": -12.998,
       "min_gap_um": 2.209,
-      "aperture_um": 96.2
+      "aperture_um": 96.2,
+      "mc_mean_db": -11.86,
+      "mc_p90_db": -11.15,
+      "mc_worst_db": -10.72
     },
     {
       "label": "② IMP4 CMA 60세대",
@@ -401,7 +428,10 @@
       "coupling_penalty": 0.4313,
       "J": -12.774,
       "min_gap_um": 2.23,
-      "aperture_um": 104.5
+      "aperture_um": 104.5,
+      "mc_mean_db": -11.72,
+      "mc_p90_db": -11.07,
+      "mc_worst_db": -10.52
     },
     {
       "label": "② tandem PSLL단독 (개선전)",
@@ -440,7 +470,52 @@
       "coupling_penalty": 0.349,
       "J": -13.016,
       "min_gap_um": 2.258,
-      "aperture_um": 101.0
+      "aperture_um": 101.0,
+      "mc_mean_db": -11.81,
+      "mc_p90_db": -11.17,
+      "mc_worst_db": -10.2
+    },
+    {
+      "label": "① 로버스트 변형 (K=24)",
+      "track": "1",
+      "time_s": 68.9,
+      "gens": 30,
+      "n_formula_eval": 19040,
+      "note": "연마만 로버스트, MC 선택",
+      "psll_worst_db": -12.927,
+      "psll_per_angle": [
+        -17.59,
+        -15.35,
+        -15.35,
+        -12.93,
+        -12.93
+      ],
+      "isl_worst_db": 0.567,
+      "isl_mean_db": -0.885,
+      "eta_main_worst": 1.0,
+      "eta_main_per_angle": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "hpbw_deg": 0.8,
+      "keep_outer_db": -1.437,
+      "keep_per_angle": [
+        0.0,
+        -0.37,
+        -0.37,
+        -1.44,
+        -1.44
+      ],
+      "coupling_penalty": 0.3949,
+      "J": -12.532,
+      "min_gap_um": 2.286,
+      "aperture_um": 90.9,
+      "mc_mean_db": -11.83,
+      "mc_p90_db": -11.22,
+      "mc_worst_db": -10.42
     },
     {
       "label": "② 챔피언 tandem (+ISL항)",
@@ -479,7 +554,10 @@
       "coupling_penalty": 0.5772,
       "J": -12.976,
       "min_gap_um": 2.246,
-      "aperture_um": 95.7
+      "aperture_um": 95.7,
+      "mc_mean_db": -12.01,
+      "mc_p90_db": -11.4,
+      "mc_worst_db": -10.83
     }
   ]
 }

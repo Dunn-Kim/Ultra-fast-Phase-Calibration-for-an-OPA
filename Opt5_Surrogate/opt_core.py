@@ -89,6 +89,37 @@ def soft_isl_per_restart(I, u, u0RA, L_RA, R, A, dw=None, eps=1e-12):
     return isl_db.reshape(R, A).mean(dim=1)      # 각도 평균 (worst 는 과도하게 뾰족)
 
 
+# 제조·구동 오차 규약 — 로버스트 최적화와 평가가 공유하는 기본값
+NOISE_POS_UM = 0.05          # 소자 위치 표준편차 [µm] (리소·에칭 편차)
+NOISE_PHASE_RAD = math.radians(5.0)   # 인가 위상 표준편차 [rad] (DAC·열드리프트 잔차)
+
+
+def perturb(d, phi, gen, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD,
+            d_min=None, d_max=None):
+    # 간격·위상에 독립 가우시안 오차 주입 (박스 제약은 유지)
+    dn = d + sig_d * th.randn(d.shape, generator=gen, dtype=d.dtype)
+    if d_min is not None:
+        dn = dn.clamp(d_min, d_max)
+    pn = phi + sig_p * th.randn(phi.shape, generator=gen, dtype=phi.dtype)
+    return dn, pn
+
+
+def mc_psll(oracle, d, u0_vec, n=300, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD,
+            seed=99):
+    # 오차 하 worst-angle PSLL 분포 (n회) — 공칭값이 아닌 '실제 기대 성능'
+    jc = oracle.jcfg
+    g = th.Generator().manual_seed(seed)
+    out = []
+    for _ in range(n):
+        dd = (d + sig_d * th.randn(d.shape, generator=g, dtype=d.dtype)
+              ).clamp(jc.d_min, jc.d_max)
+        dRA, phi, u0RA = batched_phi_star(oracle.k, dd.unsqueeze(0), u0_vec)
+        phi = phi + sig_p * th.randn(phi.shape, generator=g, dtype=phi.dtype)
+        I = oracle.intensity(dRA, phi)
+        out.append(float(psll_db(I, oracle.u, u0RA, dRA.sum(dim=1)).max()))
+    return th.tensor(out, dtype=th.float64)
+
+
 def formula_hard_per_restart(oracle, d, u0_vec):
     # 각 설계의 수식 hard PSLL worst-angle (R,) — 최종 심판
     with th.no_grad():
@@ -137,7 +168,8 @@ def s_init(jc, restarts, gen):
 
 def run_gradient(eval_I, params_dtype, dev, oracle, restarts, epochs, lr,
                  use_cpl, seed, u_grid, s_start=None, beta_fix=None,
-                 trace_every=0, trace_fn=None, u0_vec=None, w_isl=0.0):
+                 trace_every=0, trace_fn=None, u0_vec=None, w_isl=0.0,
+                 robust_k=0, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD):
     # 공통 경사 루프 — eval_I(dRA, phi) 만 갈아끼움 (서러게이트/수식)
     # trace 계측 평가 시간은 반환 타이밍에서 제외 → 보고 공정성 유지
     jc = oracle.jcfg
@@ -156,19 +188,29 @@ def run_gradient(eval_I, params_dtype, dev, oracle, restarts, epochs, lr,
         beta = beta_fix if beta_fix is not None else \
             0.2 + (2.0 - 0.2) * min(1.0, ep / (0.6 * epochs))
         d = logit_to_d(s, jc)
-        dRA, phi, u0RA = batched_phi_star(oracle.k, d, u0_vec)
+        # robust_k>0 이면 재시작마다 K개 오차 실현을 만들어 기대 손실을 최소화한다
+        d_eval = d if not robust_k else d.repeat_interleave(robust_k, dim=0)
+        R_eval = restarts * max(1, robust_k)
+        dRA, phi, u0RA = batched_phi_star(oracle.k, d_eval, u0_vec)
+        if robust_k:
+            dRA = dRA + sig_d * th.randn(dRA.shape, generator=g,
+                                         dtype=dRA.dtype, device=dRA.device)
+            phi = phi + sig_p * th.randn(phi.shape, generator=g,
+                                         dtype=phi.dtype, device=phi.device)
         I = eval_I(dRA, phi)
         L_RA = dRA.sum(dim=1)
-        loss_r = soft_psll_per_restart(I, u_grid, u0RA, L_RA, beta, restarts, A)
+        loss_r = soft_psll_per_restart(I, u_grid, u0RA, L_RA, beta, R_eval, A)
         if w_isl:
             loss_r = loss_r + w_isl * soft_isl_per_restart(
-                I, u_grid, u0RA, L_RA, restarts, A, dw)
+                I, u_grid, u0RA, L_RA, R_eval, A, dw)
+        if robust_k:                      # K개 실현의 평균 = 오차 하 기대 손실
+            loss_r = loss_r.reshape(restarts, robust_k).mean(dim=1)
         if use_cpl:
             loss_r = loss_r + coupling_penalty_batched(d, jc)
         loss_r.sum().backward()      # 재시작별 독립 (s 행 분리 + Adam 원소별)
         opt.step()
         opt.zero_grad(set_to_none=True)
-        n_eval += restarts * A
+        n_eval += R_eval * A
         t_train += time.perf_counter() - t0
         if trace_fn is not None and trace_every \
                 and (ep % trace_every == 0 or ep == epochs - 1):
@@ -199,10 +241,20 @@ def diverse_topk(d, scores, k, min_dist=0.5):
     return th.tensor(picked, dtype=th.long)
 
 
-def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0):
+def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0,
+                 robust_k=0, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD,
+                 seed=0):
     # 준뉴턴 연마 (strong Wolfe) — 국소 수렴 단계에서 Adam 수백 에포크를 대체
+    # robust_k>0: 고정된 K개 오차 실현(공통 난수)으로 기대 손실을 연마 —
+    #   L-BFGS 는 결정론적 목적함수를 요구하므로 매 클로저마다 새 샘플을 뽑지 않는다
     R, A = s0.shape[0], u0_vec.shape[0]
     dw = du_weights(oracle.u) if w_isl else None
+    if robust_k:
+        gn = th.Generator().manual_seed(seed)
+        eps_d = sig_d * th.randn(R * robust_k, jc.line_N - 1, generator=gn,
+                                 dtype=th.float64)
+        eps_p = sig_p * th.randn(R * robust_k * A, jc.line_N, generator=gn,
+                                 dtype=th.float64)
     s = s0.clone().double().requires_grad_(True)
     opt = th.optim.LBFGS([s], max_iter=max_iter, history_size=25,
                          line_search_fn='strong_wolfe',
@@ -214,13 +266,21 @@ def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0):
         n_closure += 1
         opt.zero_grad()
         d = logit_to_d(s, jc)
-        dRA, phi, u0RA = batched_phi_star(oracle.k, d, u0_vec)
+        d_eval = d if not robust_k else d.repeat_interleave(robust_k, dim=0)
+        R_eval = R * max(1, robust_k)
+        dRA, phi, u0RA = batched_phi_star(oracle.k, d_eval, u0_vec)
+        if robust_k:                       # 고정 오차 실현 (결정론적 목적함수)
+            dRA = dRA + eps_d.repeat_interleave(A, dim=0)
+            phi = phi + eps_p
         I = oracle.intensity(dRA, phi)
         L_RA = dRA.sum(dim=1)
-        loss_r = soft_psll_per_restart(I, oracle.u, u0RA, L_RA, beta, R, A)
+        loss_r = soft_psll_per_restart(I, oracle.u, u0RA, L_RA, beta,
+                                       R_eval, A)
         if w_isl:
             loss_r = loss_r + w_isl * soft_isl_per_restart(
-                I, oracle.u, u0RA, L_RA, R, A, dw)
+                I, oracle.u, u0RA, L_RA, R_eval, A, dw)
+        if robust_k:
+            loss_r = loss_r.reshape(R, robust_k).mean(dim=1)
         loss = (loss_r + coupling_penalty_batched(d, jc)).sum()
         loss.backward()
         return loss
@@ -230,7 +290,7 @@ def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0):
     elapsed = time.perf_counter() - t0
     with th.no_grad():
         d = logit_to_d(s, jc).double()
-    return d, elapsed, n_closure * R * A
+    return d, elapsed, n_closure * R * max(1, robust_k) * A
 
 
 # ---------- 동결 로더 ----------
