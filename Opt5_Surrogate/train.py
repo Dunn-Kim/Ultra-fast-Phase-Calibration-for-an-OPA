@@ -122,27 +122,16 @@ def train(cfg: SurrogateConfig, tag=None):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--arch', default='mlp',
-                    choices=['mlp', 'element', 'siren', 'ffmlp'])
+    ap.add_argument('--arch', default='mlp', choices=['mlp', 'element'])
     ap.add_argument('--steps', type=int, default=None)
     ap.add_argument('--device', default=None, choices=['auto', 'cpu', 'mps'])
     ap.add_argument('--seed', type=int, default=None,
                     help='앙상블용 시드 오버라이드 (기본 42)')
-    ap.add_argument('--lr', type=float, default=None,
-                    help='학습률 오버라이드 (SIREN은 3e-4 권장)')
-    ap.add_argument('--siren-w0', type=float, default=None,
-                    help='SIREN w0 오버라이드 (기본 30, 완화 프로브용)')
+    ap.add_argument('--lr', type=float, default=None, help='학습률 오버라이드')
     ap.add_argument('--tag', default=None)
     a = ap.parse_args()
     cfg = SurrogateConfig(arch=a.arch)
-    if a.steps:
-        cfg.steps = a.steps
-    if a.device:
-        cfg.device = a.device
-    if a.seed is not None:
-        cfg.seed = a.seed
-    if a.lr is not None:
-        cfg.lr = a.lr
-    if a.siren_w0 is not None:
-        cfg.siren_w0 = a.siren_w0
+    for k in ('steps', 'device', 'seed', 'lr'):
+        if getattr(a, k) is not None:
+            setattr(cfg, k, getattr(a, k))
     train(cfg, tag=a.tag)

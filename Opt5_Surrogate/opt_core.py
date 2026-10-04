@@ -7,6 +7,7 @@ import math
 import time
 import numpy as np
 import torch as th
+import torch.nn.functional as F
 
 from physics_oracle import PhysicsOracle
 from model import build_model
@@ -33,13 +34,13 @@ def u0_vector(dtype=th.float64, angles_deg=None):
 
 
 def batched_phi_star(k, d, u0_vec):
-    # d(R,N-1) → 재시작×각도 평탄화: dRA(R·A,N-1), φ*(R·A,N), u0RA(R·A,)
-    R, A = d.shape[0], u0_vec.shape[0]
-    zero = th.zeros(R, 1, dtype=d.dtype, device=d.device)
-    x = th.cat([zero, th.cumsum(d, dim=1)], dim=1)
+    # d(R,N-1), u0 (A,) 공통 또는 (R,A) 재시작별 → 재시작×각도 평탄화:
+    #   dRA(R·A,N-1), φ*(R·A,N), u0RA(R·A,)
+    R, A = d.shape[0], u0_vec.shape[-1]
+    x = F.pad(d.cumsum(-1), (1, 0))
     dRA = d.repeat_interleave(A, dim=0)
     xRA = x.repeat_interleave(A, dim=0)
-    u0RA = u0_vec.to(d.dtype).to(d.device).repeat(R)
+    u0RA = u0_vec.to(d).expand(R, A).reshape(-1)
     return dRA, k * xRA * u0RA.unsqueeze(1), u0RA
 
 
@@ -61,8 +62,7 @@ def psll_db(I, u, u0, L_ap, eps=1e-12):
 
 def soft_psll_per_restart(I, u, u0RA, L_RA, beta, R, A, gamma=1.0, eps=1e-12):
     # I(R·A,G) → 재시작별 soft worst-angle 손실 (R,) — 미분가능 대리 목적
-    du = 2.0 * 1.55 / L_RA
-    m = (u.reshape(1, -1) - u0RA.reshape(-1, 1)).abs() < du.reshape(-1, 1)
+    m = guard_mask(u, u0RA, L_RA)
     main = th.where(m, I, th.zeros_like(I)).amax(dim=1)
     side_db = 10.0 * th.log10(th.where(m, th.full_like(I, eps), I).clamp(min=eps)
                               / main.clamp(min=eps).unsqueeze(1))
@@ -80,8 +80,7 @@ def soft_isl_per_restart(I, u, u0RA, L_RA, R, A, dw=None, eps=1e-12):
     # 사이드로브 총에너지 / 메인로브 에너지 [dB] — "메인로브 제외 전부" 축의 미분가능판
     #   PSLL 은 최대 한 점만 보지만 ISL 은 잡광 전체를 본다. 두 지표는 상충할 수 있다.
     dw = du_weights(u) if dw is None else dw
-    du = 2.0 * 1.55 / L_RA
-    m = (u.reshape(1, -1) - u0RA.reshape(-1, 1)).abs() < du.reshape(-1, 1)
+    m = guard_mask(u, u0RA, L_RA)
     Iw = I * dw.reshape(1, -1)
     e_main = th.where(m, Iw, th.zeros_like(Iw)).sum(dim=1)
     e_side = th.where(m, th.zeros_like(Iw), Iw).sum(dim=1)
@@ -92,16 +91,6 @@ def soft_isl_per_restart(I, u, u0RA, L_RA, R, A, dw=None, eps=1e-12):
 # 제조·구동 오차 규약 — 로버스트 최적화와 평가가 공유하는 기본값
 NOISE_POS_UM = 0.05          # 소자 위치 표준편차 [µm] (리소·에칭 편차)
 NOISE_PHASE_RAD = math.radians(5.0)   # 인가 위상 표준편차 [rad] (DAC·열드리프트 잔차)
-
-
-def perturb(d, phi, gen, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD,
-            d_min=None, d_max=None):
-    # 간격·위상에 독립 가우시안 오차 주입 (박스 제약은 유지)
-    dn = d + sig_d * th.randn(d.shape, generator=gen, dtype=d.dtype)
-    if d_min is not None:
-        dn = dn.clamp(d_min, d_max)
-    pn = phi + sig_p * th.randn(phi.shape, generator=gen, dtype=phi.dtype)
-    return dn, pn
 
 
 def mc_psll(oracle, d, u0_vec, n=300, sig_d=NOISE_POS_UM, sig_p=NOISE_PHASE_RAD,
@@ -131,18 +120,10 @@ def formula_hard_per_restart(oracle, d, u0_vec):
 
 # ---------- 커플링 페널티 (d>2µm 규약) ----------
 
-def coupling_penalty_d(d, jc):
-    # 단일 설계 (Opt4 losses.coupling_penalty 와 동일식)
-    phys = th.exp(-jc.cpl_gamma * (d - jc.element_width)).mean()
-    barrier = th.nn.functional.softplus((jc.cpl_d_safe - d) / jc.cpl_tau).pow(2).mean()
-    return jc.cpl_w_phys * phys + jc.cpl_w_barrier * barrier
-
-
-def coupling_penalty_batched(d, jc):
-    # 재시작별 벡터판 (R,)
-    phys = th.exp(-jc.cpl_gamma * (d - jc.element_width)).mean(dim=1)
-    barrier = th.nn.functional.softplus((jc.cpl_d_safe - d) / jc.cpl_tau
-                                        ).pow(2).mean(dim=1)
+def coupling_penalty(d, jc):
+    # d(N-1,) → 스칼라, d(R,N-1) → (R,)  (Opt4 losses.coupling_penalty 와 동일식)
+    phys = th.exp(-jc.cpl_gamma * (d - jc.element_width)).mean(-1)
+    barrier = F.softplus((jc.cpl_d_safe - d) / jc.cpl_tau).pow(2).mean(-1)
     return jc.cpl_w_phys * phys + jc.cpl_w_barrier * barrier
 
 
@@ -158,8 +139,7 @@ def logit_to_d(s, jc):
 
 
 def s_init(jc, restarts, gen):
-    p0 = (jc.d_init - jc.d_min) / (jc.d_max - jc.d_min)
-    s0 = math.log(p0 / (1.0 - p0))
+    s0 = d_to_logit(th.tensor(jc.d_init, dtype=th.float64), jc)
     return s0 + 0.1 * th.randn(restarts, jc.line_N - 1, generator=gen,
                                dtype=th.float64)
 
@@ -206,7 +186,7 @@ def run_gradient(eval_I, params_dtype, dev, oracle, restarts, epochs, lr,
         if robust_k:                      # K개 실현의 평균 = 오차 하 기대 손실
             loss_r = loss_r.reshape(restarts, robust_k).mean(dim=1)
         if use_cpl:
-            loss_r = loss_r + coupling_penalty_batched(d, jc)
+            loss_r = loss_r + coupling_penalty(d, jc)
         loss_r.sum().backward()      # 재시작별 독립 (s 행 분리 + Adam 원소별)
         opt.step()
         opt.zero_grad(set_to_none=True)
@@ -281,7 +261,7 @@ def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0,
                 I, oracle.u, u0RA, L_RA, R_eval, A, dw)
         if robust_k:
             loss_r = loss_r.reshape(R, robust_k).mean(dim=1)
-        loss = (loss_r + coupling_penalty_batched(d, jc)).sum()
+        loss = (loss_r + coupling_penalty(d, jc)).sum()
         loss.backward()
         return loss
 

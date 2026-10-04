@@ -17,10 +17,9 @@ class SurrogateConfig:
     phi_noise_std: float = 0.3     # rad
 
     # --- 모델 ---
-    arch: str = 'mlp'              # 'mlp' | 'element' | 'siren' | 'ffmlp'
+    arch: str = 'mlp'              # 'mlp' | 'element'
     hidden: tuple = (1024, 1024, 1024, 1024)
     elem_hidden: tuple = (256, 256)   # NeuralElement 공유망
-    siren_w0: float = 30.0         # SIREN 주파수 스케일 (고차원 입력엔 완화 필요 신호)
 
     # --- 학습 ---
     batch: int = 512

@@ -12,6 +12,7 @@
 #   → 정규화 /N 으로 이상적 주엽 강도 = 1 (dB가 절대 의미)
 import math
 import torch as th
+import torch.nn.functional as F
 
 
 class OPAModel:
@@ -32,9 +33,7 @@ class OPAModel:
         return c.d_min + (c.d_max - c.d_min) * th.sigmoid(s)
 
     def positions(self, s):
-        d = self.gaps(s)
-        zero = th.zeros(1, dtype=d.dtype, device=d.device)
-        return th.cat([zero, th.cumsum(d, dim=0)])       # x_0 = 0, 길이 N [µm]
+        return F.pad(self.gaps(s).cumsum(-1), (1, 0))      # x_0 = 0, 길이 N [µm]
 
     def uniform_positions(self, d_fixed=None):
         c = self.cfg

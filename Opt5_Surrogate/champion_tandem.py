@@ -25,10 +25,9 @@ import torch.nn as nn
 
 from config import SurrogateConfig
 from physics_oracle import PhysicsOracle
-from opt_core import (psll_db, resolve_device, load_frozen, coupling_penalty_d,
-                      soft_psll_per_restart, soft_isl_per_restart,
-                      coupling_penalty_batched, du_weights,
-                      d_to_logit, polish_lbfgs)
+from opt_core import (psll_db, resolve_device, load_frozen, coupling_penalty,
+                      soft_psll_per_restart, soft_isl_per_restart, du_weights,
+                      batched_phi_star, d_to_logit, logit_to_d, polish_lbfgs)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ANGLE_FRACS = (0.0, 0.5, -0.5, 1.0, -1.0)   # 사양 u_max 에 대한 설계각 배치
@@ -56,17 +55,6 @@ class InverseNet(nn.Module):
         return s_center + self.head(self.body(spec_features(u_max)))
 
 
-def spec_batch_phi(k, d, u0):
-    # d(B,N-1), u0(B,A) → dRA(B·A,N-1), phi(B·A,N), u0RA(B·A,)
-    A = u0.shape[1]
-    zero = th.zeros(d.shape[0], 1, dtype=d.dtype, device=d.device)
-    x = th.cat([zero, th.cumsum(d, dim=1)], dim=1)
-    dRA = d.repeat_interleave(A, dim=0)
-    xRA = x.repeat_interleave(A, dim=0)
-    u0RA = u0.reshape(-1)
-    return dRA, k * xRA * u0RA.unsqueeze(1), u0RA
-
-
 def angles_for(u_max):
     # (B,) → (B,A) 설계각 u0 배치
     return u_max.reshape(-1, 1) * th.tensor(ANGLE_FRACS, dtype=u_max.dtype,
@@ -80,8 +68,7 @@ def train_inverse(model_s, oracle, jc, dev, steps, batch, lr, seed,
     opt = th.optim.Adam(net.parameters(), lr=lr)
     sched = th.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=steps,
                                                     eta_min=lr * 0.02)
-    p0 = (jc.d_init - jc.d_min) / (jc.d_max - jc.d_min)
-    s_center = math.log(p0 / (1.0 - p0))
+    s_center = float(d_to_logit(th.tensor(jc.d_init, dtype=th.float64), jc))
     u_grid = oracle.u.float().to(dev)
     dw = du_weights(u_grid) if w_isl else None
     A = len(ANGLE_FRACS)
@@ -92,8 +79,8 @@ def train_inverse(model_s, oracle, jc, dev, steps, batch, lr, seed,
         u_max = (u_lo + (u_hi - u_lo)
                  * th.rand(batch, device=dev, dtype=th.float32))
         s = net(u_max, s_center)
-        d = jc.d_min + (jc.d_max - jc.d_min) * th.sigmoid(s)
-        dRA, phi, u0RA = spec_batch_phi(oracle.k, d, angles_for(u_max))
+        d = logit_to_d(s, jc)
+        dRA, phi, u0RA = batched_phi_star(oracle.k, d, angles_for(u_max))
         pred = model_s(dRA, phi)
         I = pred[:, 0] ** 2 + pred[:, 1] ** 2
         L_RA = dRA.sum(dim=1)
@@ -101,7 +88,7 @@ def train_inverse(model_s, oracle, jc, dev, steps, batch, lr, seed,
         if w_isl:
             loss_r = loss_r + w_isl * soft_isl_per_restart(
                 I, u_grid, u0RA, L_RA, batch, A, dw)
-        loss = (loss_r + coupling_penalty_batched(d, jc)).mean()
+        loss = (loss_r + coupling_penalty(d, jc)).mean()
         opt.zero_grad(set_to_none=True)
         loss.backward()
         opt.step()
@@ -114,18 +101,16 @@ def train_inverse(model_s, oracle, jc, dev, steps, batch, lr, seed,
 
 def judge(oracle, jc, d, u0_row):
     # 단일 설계 판정 → (raw PSLL, cpl, J)
-    dRA, phi, u0RA = spec_batch_phi(oracle.k, d.unsqueeze(0),
-                                    u0_row.unsqueeze(0))
+    dRA, phi, u0RA = batched_phi_star(oracle.k, d.unsqueeze(0), u0_row)
     I = oracle.intensity(dRA, phi)
     p = float(psll_db(I, oracle.u, u0RA, dRA.sum(dim=1)).max())
-    c = float(coupling_penalty_d(d, jc))
+    c = float(coupling_penalty(d, jc))
     return p, c, p + c
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--arch', default='mlp',
-                    choices=['mlp', 'element', 'siren', 'ffmlp'])
+    ap.add_argument('--arch', default='mlp', choices=['mlp', 'element'])
     ap.add_argument('--ckpt', default='checkpoints/mlp_full.pt')
     ap.add_argument('--steps', type=int, default=4000)
     ap.add_argument('--batch', type=int, default=64)
@@ -146,8 +131,7 @@ def main():
     jc = oracle.jcfg
     # barrier 상향은 학습·연마 압력 조절용 — 판정은 규약 기본값으로 되돌려 수행
     w_barrier_judge = jc.cpl_w_barrier
-    if a.w_barrier is not None:
-        jc.cpl_w_barrier = a.w_barrier
+    jc.cpl_w_barrier = a.w_barrier
     dev = th.device(resolve_device(a.device))
     model_s, _ = load_frozen(cfg, a.ckpt)
     model_s = model_s.to(dev)
@@ -178,7 +162,7 @@ def main():
 
     with th.no_grad():
         s_all = net(u_specs.to(dev), s_center).cpu().double()
-    d_all = jc.d_min + (jc.d_max - jc.d_min) * th.sigmoid(s_all)
+    d_all = logit_to_d(s_all, jc)
 
     jc.cpl_w_barrier = w_barrier_judge          # 이하 판정·연마 보고는 규약 기준
     rows = []

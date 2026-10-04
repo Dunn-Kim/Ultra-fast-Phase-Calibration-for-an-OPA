@@ -39,7 +39,7 @@
 |---|---|
 | `opt_core.py` | **공용 코어 정본** — 설계 프로토콜, 배치 필드 조립, soft/hard PSLL, 커플링 페널티, 경사 탐색, 다양성 선택, L-BFGS 연마, 동결 로더 |
 | `config.py` / `physics_oracle.py` | 설정 / Opt4 수식 브리지 (물리 상수·EF 단일 진실원) |
-| `data_gen.py` / `model.py` / `train.py` | 모사 모델 학습 (스트리밍 샘플러 · MLP·element·siren·ffmlp · 사전학습) |
+| `data_gen.py` / `model.py` / `train.py` | 모사 모델 학습 (스트리밍 샘플러 · MLP·element · 사전학습) |
 | **`champion_track1.py`** | **① 순수 최적화 챔피언** — 수식 Adam 30ep → 다양성 top-12 → L-BFGS |
 | **`champion_tandem.py`** | **② 모사-최적화 챔피언** — tandem 역설계망 학습 + 사양별 추론·연마 |
 | `evaluate_champions.py` | 4축 판정 (PSLL·ISL·HPBW·η·유지 + 시간/세대/평가횟수), `--mc N` 으로 오차 하 성능 병기 |

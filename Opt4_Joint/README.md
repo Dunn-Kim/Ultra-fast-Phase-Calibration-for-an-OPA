@@ -78,6 +78,20 @@ python test_opt4.py               # 검증 스위트 7종
   (−12~−13 dB) 근방. 산출물: `final_spacing_multiangle.csv`, `design_report_multiangle.json`,
   `psll_vs_angle.png`, `pattern_steered.png`.
 
+## 실험 스크립트 보관 위치
+
+아래 절들이 인용하는 일회성 실험 스크립트(`experiment_*.py`, `benchmark_common.py`,
+`calib_benchmark.py`, `calib_ann.py`, `beamform_optimize.py`, `farfield_canonical.py`,
+`variable_map.py`)는 결론이 `results/*.json` 과 이 문서에 기록되어 작업 트리에서 정리됐다.
+코드는 커밋 `98b5e53` 에 그대로 남아 있다:
+
+```bash
+git show 98b5e53:Opt4_Joint/experiment_beyond.py > experiment_beyond.py
+```
+
+Opt5 학습 분포가 참조하는 `results/final_spacing_realEF_pm15_cpl.csv` 의 생성기
+(`experiment_coupling_penalty.py`, `experiment_real_ef_tables.py`)는 남겨 두었다.
+
 ## 최적화 너머 (beyond) — 방법론 한계 실측
 
 `experiment_beyond.py` + 4방향 병렬 탐색으로 대안 방법론을 전수 벤치마크

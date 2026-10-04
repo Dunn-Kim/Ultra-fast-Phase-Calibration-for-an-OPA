@@ -7,6 +7,7 @@ import os
 import math
 import importlib.util
 import torch as th
+import torch.nn.functional as F
 
 # Opt5에도 config.py/model.py가 있어 바레 임포트는 sys.modules에서 충돌 →
 # Opt4 모듈을 고유 이름으로 파일 직접 로드 (Opt4가 단일 진실원)
@@ -40,8 +41,7 @@ class PhysicsOracle:
 
     def positions(self, d):
         # d: (B, N-1) 간격[µm] → x: (B, N) 위치[µm], x₀=0
-        zero = th.zeros(d.shape[0], 1, dtype=d.dtype, device=d.device)
-        return th.cat([zero, th.cumsum(d, dim=1)], dim=1)
+        return F.pad(d.cumsum(-1), (1, 0))
 
     def field(self, d, phi):
         # d: (B, N-1), phi: (B, N) [rad] → E: (B, 1801) complex128

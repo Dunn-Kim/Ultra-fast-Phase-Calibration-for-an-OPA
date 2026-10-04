@@ -16,6 +16,7 @@ import time
 
 import pandas as pd
 import torch as th
+import torch.nn.functional as F
 
 from config import JointConfig
 from losses import beta_schedule, total_loss, w_sll_schedule
@@ -108,22 +109,25 @@ def run_single(cfg, restart_seed, mode='joint', track_logs=False):
             'val_psll': val_psll, 'logs': logs, 'seed': restart_seed}
 
 
-def snap_and_recalibrate(cfg, model, s_star):
-    # E4 — 5nm 공정 그리드 스냅 후 위상만 재캘리브레이션 (Stage B 모사)
-    with th.no_grad():
-        d = model.gaps(s_star)
-        grid = cfg.fab_snap_nm * 1e-3  # nm → µm
-        d_snap = th.round(d / grid) * grid
-        zero = th.zeros(1, dtype=cfg.dtype, device=cfg.device)
-        x_snap = th.cat([zero, th.cumsum(d_snap, dim=0)])
-    phi = model.steering_phase(x_snap).clone().requires_grad_(True)
+def polish_phase(cfg, model, x, u0=None):
+    # 간격 동결, 해석 조향해에서 출발해 위상만 재수렴
+    phi = model.steering_phase(x, u0).clone().requires_grad_(True)
     opt = th.optim.Adam([phi], lr=cfg.lr_phase_polish)
     for _ in range(cfg.epochs_polish):
         opt.zero_grad()
-        loss, _ = total_loss(model, x_snap, phi, cfg.beta_end, 1.0)
+        loss, _ = total_loss(model, x, phi, cfg.beta_end, 1.0, u0=u0)
         loss.backward()
         opt.step()
-    return d_snap, x_snap, phi.detach()
+    return phi.detach()
+
+
+def snap_and_recalibrate(cfg, model, s_star):
+    # E4 — 5nm 공정 그리드 스냅 후 위상만 재캘리브레이션 (Stage B 모사)
+    with th.no_grad():
+        grid = cfg.fab_snap_nm * 1e-3  # nm → µm
+        d_snap = th.round(model.gaps(s_star) / grid) * grid
+        x_snap = F.pad(d_snap.cumsum(-1), (1, 0))
+    return d_snap, x_snap, polish_phase(cfg, model, x_snap)
 
 
 def steering_sweep(cfg, model, x_frozen, angles_deg=(0, 10, -10, 20, -20, 30, -30)):
@@ -131,14 +135,7 @@ def steering_sweep(cfg, model, x_frozen, angles_deg=(0, 10, -10, 20, -20, 30, -3
     rows = []
     for a in angles_deg:
         u0 = math.sin(math.radians(a))
-        phi = model.steering_phase(x_frozen, u0).clone().requires_grad_(True)
-        opt = th.optim.Adam([phi], lr=cfg.lr_phase_polish)
-        for _ in range(cfg.epochs_polish):
-            opt.zero_grad()
-            loss, _ = total_loss(model, x_frozen, phi, cfg.beta_end, 1.0, u0=u0)
-            loss.backward()
-            opt.step()
-        m = summarize(model, x_frozen, phi.detach(), u0=u0)
+        m = summarize(model, x_frozen, polish_phase(cfg, model, x_frozen, u0), u0=u0)
         rows.append({'theta_deg': a, **m})
     return rows
 
@@ -152,13 +149,12 @@ def robustness_mc(cfg, model, s_star, phi_star, n_draw=1000,
     psll = []
     for _ in range(n_draw):
         d = d_star + (sigma_gap_nm * 1e-3) * th.randn_like(d_star)
-        zero = th.zeros(1, dtype=cfg.dtype, device=cfg.device)
-        x = th.cat([zero, th.cumsum(d, dim=0)])
+        x = F.pad(d.cumsum(-1), (1, 0))
         phi = phi_star + sigma_phi_rad * th.randn_like(phi_star)
         psll.append(hard_psll_db(model, x, phi, u=model.u_train))
     t = th.tensor(psll)
     return {'p50': t.median().item(),
-            'p95': t.kthvalue(int(0.95 * n_draw)).values.item(),
+            'p95': t.quantile(0.95).item(),
             'worst': t.max().item()}
 
 

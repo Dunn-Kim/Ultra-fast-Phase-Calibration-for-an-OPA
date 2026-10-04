@@ -5,7 +5,7 @@ import time
 import torch as th
 
 from config import JointConfig
-from losses import soft_psll, total_loss
+from losses import coupling_penalty, soft_psll, total_loss
 from metrics import hard_psll_db, summarize
 from model import OPAModel
 
@@ -149,10 +149,6 @@ def test_runtime():
 
 # 8. Gray-box EF 보정 — 기본값 = 실 MODE 적합치 + 구조 불변식
 def test_graybox_ef():
-    import math
-    import torch as th
-    from config import JointConfig
-    from model import OPAModel
     u = th.sin(th.deg2rad(th.tensor([0., 20, 45, 89], dtype=th.float64)))
     # ef_oblq_p=0, gcoef=0 → 기존 top-hat sinc (레거시 브리지)
     m0 = OPAModel(JointConfig(ef_oblq_p=0.0, ef_gcoef=(0.0, 0.0, 0.0)))
@@ -174,11 +170,7 @@ def test_graybox_ef():
 
 # 9. 고속 캘리브레이션 — 카메라 프레임 5장으로 주엽 복원 (ε 미지, 실칩 인터페이스)
 def test_calibrate_fast():
-    import math
-    import torch as th
-    from config import JointConfig
     from main_calibration import calibrate_fast
-    from model import OPAModel
     cfg = JointConfig()
     m = OPAModel(cfg)
     x = m.uniform_positions()
@@ -200,10 +192,6 @@ def test_calibrate_fast():
 
 # 10. 커플링 페널티 — (a)물리+(b)장벽 혼합의 구조 불변식
 def test_coupling_penalty():
-    import torch as th
-    from config import JointConfig
-    from losses import coupling_penalty
-    from model import OPAModel
     m = OPAModel(JointConfig())
     d_floor = th.full((31,), 2.05, dtype=th.float64)
     d_safe = th.full((31,), 2.5, dtype=th.float64)

@@ -34,7 +34,7 @@ def load_champion():
 def print_spec():
     o = PhysicsOracle()
     d = load_champion()
-    x = th.cat([th.zeros(1, dtype=th.float64), th.cumsum(d, 0)])
+    x = o.positions(d.unsqueeze(0))[0]
     print('=' * 72)
     print('MODE(varFDTD) 검증 실행 명세 — 이 조건 그대로 돌린 뒤 --check 로 대조')
     print('=' * 72)
@@ -115,15 +115,11 @@ def crosscheck():
         phi = np.deg2rad(ph[1:1 + pt.shape[0]])
         phi = np.concatenate([np.zeros((phi.shape[0], 1)), phi], axis=1)
         obs = pt / pt.max(axis=1, keepdims=True)
-        x = th.arange(n_elem, dtype=th.float64) * o.jcfg.d_init
-        ef = o.opa.element_factor_amp(o.u)
+        # 수식 오라클로 예측 (/N 정규화 차이는 프레임별 LS 게인 c 가 흡수)
+        d = th.full((1, n_elem - 1), o.jcfg.d_init, dtype=th.float64)
         r2s = []
-        for j in range(obs.shape[0]):
-            p = th.tensor(phi[j], dtype=th.float64)
-            E = th.exp(1j * (o.k * o.u.reshape(-1, 1) * x.reshape(1, -1)
-                             - p.reshape(1, -1))).sum(1)
-            prd = ((ef * E.abs() / n_elem) ** 2).numpy()
-            ob = obs[j]
+        for p, ob in zip(phi, obs):
+            prd = o.intensity(d, th.tensor(p).unsqueeze(0))[0].numpy()
             c = (prd * ob).sum() / max((prd * prd).sum(), 1e-30)
             r2s.append(1 - ((c * prd - ob) ** 2).sum() / ((ob - ob.mean()) ** 2).sum())
         rows.append((n_elem, float(np.mean(r2s)), float(np.min(r2s))))

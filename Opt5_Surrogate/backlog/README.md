@@ -30,6 +30,6 @@
 python backlog/experiment_cmaes_explore.py --ckpt checkpoints/mlp_full.pt --gens 250
 ```
 
-SIREN(`arch=siren`)은 모델 정의만 `../model.py` 에 남아 있고 별도 실험 파일은 없다 —
-w0=30 에서 발산, w0=5 에서도 R² 0.215 로 실패했다. 좌표망을 607차원 조건부 회귀에
+SIREN·ffmlp 모델 정의는 `../model.py` 에서 제거됐다 (`git show 98b5e53:Opt5_Surrogate/model.py`
+로 복원 가능). SIREN 은 w0=30 에서 발산, w0=5 에서도 R² 0.215 로 실패했다. 좌표망을 607차원 조건부 회귀에
 적용한 도메인 오용이며, 재도전한다면 FiLM 조건화가 전제다.

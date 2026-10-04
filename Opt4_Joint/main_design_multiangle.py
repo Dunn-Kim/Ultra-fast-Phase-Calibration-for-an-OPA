@@ -16,6 +16,7 @@ import time
 
 import pandas as pd
 import torch as th
+import torch.nn.functional as F
 
 from config import JointConfig
 from losses import beta_schedule, multi_angle_worst_psll
@@ -86,17 +87,13 @@ def snap(cfg, model, s_star):
             vals[i] = round(v, 9)
             used.add(vals[i])
         d_snap = th.tensor(vals, dtype=cfg.dtype, device=cfg.device)
-        zero = th.zeros(1, dtype=cfg.dtype, device=cfg.device)
-        return d_snap, th.cat([zero, th.cumsum(d_snap, dim=0)])
+        return d_snap, F.pad(d_snap.cumsum(-1), (1, 0))
 
 
 @th.no_grad()
 def gap_distinctness(d):
     # '모든 간격 상호 상이' 검증: 최소 쌍별 차이
-    dd = (d.reshape(-1, 1) - d.reshape(1, -1)).abs()
-    n = d.numel()
-    off = dd + th.eye(n, dtype=d.dtype) * 1e9
-    return off.min().item()
+    return th.pdist(d.reshape(-1, 1)).min().item()
 
 
 def main():
@@ -148,8 +145,8 @@ def main():
     with open(os.path.join(RESULTS, 'design_report_multiangle.json'), 'w') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
-    import plotting_multiangle
-    plotting_multiangle.make_all(cfg, model, x_snap, report, RESULTS)
+    import plotting
+    plotting.make_all_multiangle(cfg, model, x_snap, report, RESULTS)
     print(f"총 {report['runtime_sec']} s. 산출물 → {RESULTS}/")
     return report
 

@@ -14,6 +14,7 @@ import os
 
 import pandas as pd
 import torch as th
+import torch.nn.functional as F
 
 from config import JointConfig
 from losses import main_lobe_loss
@@ -25,10 +26,7 @@ RESULTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'results')
 
 def load_frozen_positions(cfg, spacing_csv):
     d = th.tensor(pd.read_csv(spacing_csv)['d_um'].values, dtype=cfg.dtype, device=cfg.device)
-    zero = th.zeros(1, dtype=cfg.dtype, device=cfg.device)
-    x = th.cat([zero, th.cumsum(d, dim=0)])
-    x.requires_grad_(False)
-    return x
+    return F.pad(d.cumsum(-1), (1, 0))
 
 
 def calibrate_fast(cfg, model, x_frozen, shoot, frames=5, inner=250, lr=0.2, restarts=3):
@@ -40,7 +38,7 @@ def calibrate_fast(cfg, model, x_frozen, shoot, frames=5, inner=250, lr=0.2, res
 
     원리: MATLAB REV(getSpot)는 프레임에서 스팟 강도 1개만 뽑아 31개 미지수에 5N=155장을 쓴다.
     카메라는 매 프레임 전체 패턴(수천 픽셀 = 독립 방정식 다수)을 주므로, 전체 패턴에
-    ε̂ 를 적합하면 5장으로 충분하다 (155 → 5, 31배). 벤치마크: calib_benchmark.py
+    ε̂ 를 적합하면 5장으로 충분하다 (155 → 5, 31배). 벤치마크: calib_benchmark.py (98b5e53 이력)
 
     프로브: 랜덤 U(−π,π). Hadamard 는 ±π/2 2값뿐이라 프레임당 다양성이 빈약해 오히려 열세
     (calib_probe_design.json 실측). 멀티스타트로 국소최소 회피.

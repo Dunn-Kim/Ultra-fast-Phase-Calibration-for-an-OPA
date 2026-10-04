@@ -20,35 +20,31 @@ import numpy as np
 import torch as th
 
 from physics_oracle import PhysicsOracle
-from opt_core import (DESIGN_ANGLES_DEG, coupling_penalty_d, batched_phi_star,
-                      mc_psll, u0_vector)
+from opt_core import (DESIGN_ANGLES_DEG, coupling_penalty, batched_phi_star,
+                      du_weights, guard_mask, mc_psll, u0_vector)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def metrics(oracle, d, angles_deg=DESIGN_ANGLES_DEG):
     jc = oracle.jcfg
-    u0_vec = th.tensor([math.sin(math.radians(x)) for x in angles_deg],
-                       dtype=th.float64)
+    u0_vec = u0_vector(angles_deg=angles_deg)
     dRA, phi, u0RA = batched_phi_star(oracle.k, d.unsqueeze(0), u0_vec)
     I = oracle.intensity(dRA, phi)                    # (A, G)
     u = oracle.u
-    du = th.tensor(np.gradient(u.numpy()), dtype=th.float64)   # Δu 가중
-    L_ap = float(d.sum())
-    guard = 2.0 * jc.wavelength / L_ap
+    du = du_weights(u)                                # Δu 가중
+    M = guard_mask(u, u0RA, dRA.sum(dim=1))           # 메인로브 가드밴드 (A, G)
     ef = oracle.opa.element_factor_amp(u0_vec) ** 2    # 각도별 이론상한
 
     psll, isl, eta, peak, hpbw = [], [], [], [], []
     for i in range(I.shape[0]):
-        m = (u - u0_vec[i]).abs() < guard              # 메인로브 가드밴드
-        Ii = I[i]
-        main = float(Ii[m].max())
+        m, Ii = M[i], I[i]
+        pk = float(Ii[m].max())
         side = float(th.where(m, th.full_like(Ii, 0.0), Ii).max())
-        psll.append(10.0 * math.log10(max(side, 1e-30) / max(main, 1e-30)))
+        psll.append(10.0 * math.log10(max(side, 1e-30) / max(pk, 1e-30)))
         e_main = float((Ii * du).abs()[m].sum())
         e_side = float((Ii * du).abs().sum() - e_main)
         isl.append(10.0 * math.log10(max(e_side, 1e-30) / max(e_main, 1e-30)))
-        pk = float(Ii[m].max())
         peak.append(pk)
         eta.append(pk / max(float(ef[i]), 1e-30))
         # 빔폭(HPBW): 메인로브 −3dB 교차폭 [deg] — 개구가 넓을수록 좁다
@@ -62,7 +58,7 @@ def metrics(oracle, d, angles_deg=DESIGN_ANGLES_DEG):
             hpbw.append(float('nan'))
     keep = [10.0 * math.log10(max(p, 1e-30) / max(peak[0], 1e-30))
             for p in peak]
-    cpl = float(coupling_penalty_d(d, jc))
+    cpl = float(coupling_penalty(d, jc))
     return dict(
         psll_worst_db=round(max(psll), 3),
         psll_per_angle=[round(x, 2) for x in psll],
@@ -165,9 +161,7 @@ def main():
               f"{r['eta_main_worst']:6.3f} {r['keep_outer_db']:7.2f} "
               f"{r['J']:8.2f}"
               f"{(' %8.2f' % r['mc_p90_db']) if a.mc else ''} "
-              f"{(r['time_s'] if r['time_s'] is not None else -1):8.2f} "
-              f"{(r['gens'] if r['gens'] is not None else -1):6d} "
-              f"{(r['n_formula_eval'] if r['n_formula_eval'] is not None else -1):9d}")
+              f"{r['time_s']:8.2f} {r['gens']:6d} {r['n_formula_eval']:9d}")
     print('→', jp)
 
 

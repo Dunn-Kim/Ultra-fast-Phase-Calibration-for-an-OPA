@@ -19,7 +19,7 @@ import torch as th
 from physics_oracle import PhysicsOracle
 from opt_core import (u0_vector, formula_hard_per_restart, run_gradient,
                       diverse_topk, d_to_logit, polish_lbfgs,
-                      coupling_penalty_d, mc_psll)
+                      coupling_penalty, mc_psll)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -47,8 +47,7 @@ def main():
     jc = oracle.jcfg
     # barrier 상향은 최적화 압력 조절용 — 판정은 항상 규약 기본값으로 되돌려 수행한다
     w_barrier_judge = jc.cpl_w_barrier
-    if a.w_barrier is not None:
-        jc.cpl_w_barrier = a.w_barrier
+    jc.cpl_w_barrier = a.w_barrier
     u0_vec = u0_vector()
 
     def eval_I_f(dRA, phi):
@@ -71,13 +70,13 @@ def main():
     p_fin = formula_hard_per_restart(oracle, d_p, u0_vec)
     n_judge = d_p.shape[0] * u0_vec.shape[0]
     jc.cpl_w_barrier = w_barrier_judge          # 판정 기준 원복
-    J = [float(p_fin[i]) + float(coupling_penalty_d(d_p[i], jc))
+    J = [float(p_fin[i]) + float(coupling_penalty(d_p[i], jc))
          for i in range(d_p.shape[0])]
     if a.robust:
         # 로버스트 모드에서는 선택 기준도 오차 하 성능이어야 일관된다
         # (공칭 J 로 고르면 로버스트 연마의 이득이 선택 단계에서 버려진다)
         score = [float(mc_psll(oracle, d_p[i], u0_vec, n=120).quantile(0.9))
-                 + float(coupling_penalty_d(d_p[i], jc))
+                 + float(coupling_penalty(d_p[i], jc))
                  for i in range(d_p.shape[0])]
         pick = int(np.argmin(score))
     else:
@@ -95,7 +94,7 @@ def main():
                mc=dict(mean=round(float(mc.mean()), 3),
                        p90=round(float(mc.quantile(0.9)), 3),
                        worst=round(float(mc.max()), 3)),
-               coupling_penalty=round(float(coupling_penalty_d(d_c, jc)), 4),
+               coupling_penalty=round(float(coupling_penalty(d_c, jc)), 4),
                J=round(J[pick], 3),
                elapsed_s=round(t_total, 2),
                breakdown_s=dict(explore=round(t_x, 2), rank=round(t_rank, 2),
