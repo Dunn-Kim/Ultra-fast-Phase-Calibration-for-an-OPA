@@ -1,0 +1,117 @@
+{
+ "protocol": "±15° 5각, J=θ-격자 f64 hard PSLL + 커플링(0.8), 회차=순차 배치 평가 수",
+ "rows": [
+  {
+   "method": "기준 multistart (Adam 탐색 → 행별 L-BFGS)",
+   "seeds": 8,
+   "J_mean": -13.0391,
+   "J_worst": -12.9232,
+   "J_std": 0.0699,
+   "units": 188344,
+   "rounds": 1185,
+   "source": {
+    "J": "r_multistart__B1",
+    "rounds": "r_multistart__B1"
+   },
+   "note": ""
+  },
+  {
+   "method": "진화 메메틱 (L-SHADE/CMA + 행별 L-BFGS)",
+   "seeds": 8,
+   "J_mean": -13.4504,
+   "J_worst": -13.3047,
+   "J_std": 0.0662,
+   "units": 139682,
+   "rounds": 4787,
+   "source": {
+    "J": "evo_ms_R256__B1",
+    "rounds": "rc_evo_ms__B1"
+   },
+   "note": ""
+  },
+  {
+   "method": "진화 ILS (병렬 반복국소탐색)",
+   "seeds": 8,
+   "J_mean": -13.4503,
+   "J_worst": -13.3641,
+   "J_std": 0.0642,
+   "units": 195242,
+   "rounds": 10317,
+   "source": {
+    "J": "evo_sils_p4__B1",
+    "rounds": "rc_evo_sils__B1"
+   },
+   "note": ""
+  },
+  {
+   "method": "베이신 호핑 (MBH + β 연속 마무리)",
+   "seeds": 8,
+   "J_mean": -13.4462,
+   "J_worst": -13.3847,
+   "J_std": 0.0356,
+   "units": 195878,
+   "rounds": 7834,
+   "source": {
+    "J": "bh_mbh_best1__B1",
+    "rounds": "rc_bh_best__B1"
+   },
+   "note": ""
+  },
+  {
+   "method": "학습 기반 (엘리트 재생 + 흐름 사전분포)",
+   "seeds": 8,
+   "J_mean": -13.396,
+   "J_worst": -13.3737,
+   "J_std": 0.015,
+   "units": 169524,
+   "rounds": 2464,
+   "source": {
+    "J": "learn_mix_fin__B1",
+    "rounds": "rc_learn_mix__B1"
+   },
+   "note": "학습 1.95e6 단위 별도"
+  },
+  {
+   "method": "목적함수 재조정 + 정확 minimax SLP (B1)",
+   "seeds": 8,
+   "J_mean": -13.493,
+   "J_worst": -13.4384,
+   "J_std": 0.0448,
+   "units": 71532,
+   "rounds": 857,
+   "source": {
+    "J": "obj_champ_B1__B1",
+    "rounds": "r_objchamp__B1"
+   },
+   "note": "SLP 60회 수동 가산"
+  },
+  {
+   "method": "목적함수 재조정 + SLP, 대규모 (B2)",
+   "seeds": 3,
+   "J_mean": -13.5485,
+   "J_worst": -13.5126,
+   "J_std": 0.0462,
+   "units": 1609580,
+   "rounds": 2608,
+   "source": {
+    "J": "obj_B2_R2560_pb2__B2",
+    "rounds": "rc_obj_b2__B2"
+   },
+   "note": "SLP 60회 수동 가산, 시드 3개"
+  },
+  {
+   "method": "챔피언 m_round",
+   "seeds": 8,
+   "J_mean": -13.5522,
+   "J_worst": -13.5208,
+   "J_std": 0.0189,
+   "units": 952896,
+   "rounds": 71,
+   "source": {
+    "J": "champion__B2",
+    "rounds": "champion__B2"
+   },
+   "note": "융합 Newton 시 47회차"
+  }
+ ]
+}

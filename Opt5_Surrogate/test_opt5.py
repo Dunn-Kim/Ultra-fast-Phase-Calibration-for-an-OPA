@@ -141,3 +141,20 @@ def test_mps_cpu_parity(oracle, arch):
         out_mps = m_mps(d32.to('mps'), p32.to('mps')).cpu()
     rmse = (out_cpu - out_mps).pow(2).mean().sqrt().item()
     assert rmse < 1e-3, f'{arch} MPS/CPU 불일치: rmse={rmse:.2e}'
+
+
+def test_vdomain_matches_formula(oracle):
+    # [10] v-도메인 bmm 강도 ≡ Opt4 OPAModel.intensity (조향해 φ*, 유효 격자점 전부)
+    from opt_core import VDomain, u0_vector
+    d, _ = _rand_batch(oracle, B=2, seed=5)
+    u0v = u0_vector()
+    vd = VDomain(oracle, u0v, dtype=th.float64)
+    I, _, _ = vd.parts(d)
+    x = oracle.positions(d)
+    for b in range(d.shape[0]):
+        for a in range(u0v.shape[0]):
+            m = vd.valid[a]
+            u = vd.v[m] + u0v[a]
+            phi = oracle.opa.steering_phase(x[b], float(u0v[a]))
+            I_ref = oracle.opa.intensity(x[b], phi, u)
+            assert th.allclose(I[b, a, m], I_ref, rtol=1e-8, atol=1e-12)
