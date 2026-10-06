@@ -44,7 +44,7 @@
 | **`champion_tandem.py`** | **② 모사-최적화 챔피언** — tandem 역설계망 학습 + 사양별 추론·연마 |
 | `evaluate_champions.py` | 4축 판정 (PSLL·ISL·HPBW·η·유지 + 시간/세대/평가횟수), `--mc N` 으로 오차 하 성능 병기 |
 | `mode_validation.py` | MODE 검증 — `--crosscheck`(기존 로그로 EF 재검증) / `--spec`(랩 실행 명세) / `--check`(결과 대조) |
-| `test_opt5.py` | 회귀 게이트 9종 (오라클 항등, 동결 보증, MPS 패리티 등) |
+| `test_opt5.py` | 회귀 게이트 10종 (오라클 항등, 동결 보증, MPS 패리티, v-도메인 엔진 정합 등) |
 | `backlog/` | 미채택 실험 동결 보존 — `backlog/README.md` 참조 |
 | **`research/`** | **회차 최소화 챔피언 `m_round` + 연구 하네스 — `research/README.md` 참조** |
 
@@ -72,6 +72,9 @@ python champion_tandem.py --ckpt checkpoints/mlp_full.pt
 
 # 4축 판정
 python evaluate_champions.py
+
+# 회차 최소화 챔피언 (현재 최고, 서러게이트 불필요) — research/README.md
+python research/harness.py run m_round --tier B2 --lanes mps,cpu,cpu --tag champion
 ```
 
 ## 결과 (2026-07-22, ver_fullRegression)
@@ -131,7 +134,7 @@ top-K 수식 연마가 필수 안전장치.
 오용으로 붕괴)·ffmlp(모사 정확도 −19%가 champion 품질로 전이되지 않음), IMP5 구조적
 초기해(로짓 포화로 경계 유착).
 
-### 5) 성능 한계와 검증 상태
+### 5) 성능 한계와 검증 상태 (2026-10-05 갱신)
 
 **(정정, 2026-10-05) −13.4 dB 는 하드웨어의 벽이 아니었다.** 위상·진폭 자유도를 열어도 이득이
 작다는 관찰(+0.02 / +0.33 dB)은 유효하지만, 간격 최적화 자체는 당시 파이프라인의 결함 — 연마 전 순위로
@@ -142,7 +145,8 @@ top-K 수식 연마가 필수 안전장치.
 **실제 조건에서는 공칭보다 나쁘다.** 위치 σ=50nm·위상 σ=5° 오차 하 p90 은
 ① 챔피언 −11.18, ② tandem −11.40, GA −9.86 — 격차는 유지되나 절대값은 1.5 dB 손실한다.
 로버스트 최적화(`--robust K`)를 넣었으나 이득이 p90 +0.13 dB 에 시간 10배라 기본값은
-아니다. tandem 은 명시적 로버스트 없이도 가장 강건하다.
+아니다. tandem 은 명시적 로버스트 없이도 가장 강건하다. 회차 최소화 챔피언 설계는 같은 오차 하 p90 −11.46 으로
+셋보다 강건하다 (공칭 PSLL −14.01).
 
 **남은 미검증은 하나** — EF 모델이 d=3µm 등간격 로그로 적합됐으므로 비등간격 배열에서의
 정확도는 varFDTD 신규 실행 전까지 미확인이다. 다만 EF 를 크게 흔들어도(보정 제거 포함)

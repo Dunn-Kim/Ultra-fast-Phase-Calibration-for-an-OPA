@@ -3,7 +3,8 @@
 광위상배열(OPA)의 초기 위상 오차를 적은 반복으로 보정하는 연구 코드다.
 Photonics Conference 2022 포스터([`PC2022_poster_DH_v5_final.pdf`](PC2022_poster_DH_v5_final.pdf))에서
 발표한 Adam 기반 위상 캘리브레이션이 출발점이고, 이후 같은 질문을 간격 설계와 서러게이트 모델로
-넓힌 후속 연구가 함께 들어 있다.
+넓힌 후속 연구가 함께 들어 있다. 현재 간격 설계 챔피언은 **반복 47~71회차**로 판정 J 평균 −13.552
+(PSLL −14.0 dB 급)을 낸다 — [아래 요약](#현재-챔피언--회차-최소화-간격-설계).
 
 > Do-Hyung Kim, Dong-Hwan Kim, Ji-Yeong Gwon, Sang-Shin Lee,
 > "Ultra-fast Phase Calibration for an Optical Phased Array," Photonics Conference 2022 (poster).
@@ -53,6 +54,7 @@ Photonics Conference 2022 포스터([`PC2022_poster_DH_v5_final.pdf`](PC2022_pos
 | `Opt3_Back_Forward/` | Simulation result | 역방향(MODE 초기 패턴을 수식으로 모방해 초기 오차를 추정) → 순방향(보정) 2단계. `Resultants/` 에 N=32/64/128 각 100회 반복의 위상·주엽 강도·원거리장 로그가 있다 |
 | `Opt4_Joint/` | 후속 연구 ① | 간격 + 위상 공동 설계, 프레임 5장 캘리브레이션 — [README](Opt4_Joint/README.md) |
 | `Opt5_Surrogate/` | 후속 연구 ② | 원거리장 수식 회귀 서러게이트, 초 단위 간격 설계 — [README](Opt5_Surrogate/README.md) |
+| `Opt5_Surrogate/research/` | 후속 연구 ③ (현재 챔피언) | 회차 최소화 간격 설계 `m_round` + 연구 하네스 — [README](Opt5_Surrogate/research/README.md) |
 
 레포의 이미지와 데이터는 모두 MODE 시뮬레이션이나 pyplot 산출물이며, 실칩 관측 데이터는 들어 있지 않다.
 
@@ -69,6 +71,21 @@ Photonics Conference 2022 포스터([`PC2022_poster_DH_v5_final.pdf`](PC2022_pos
 | 반복 횟수 = **품질의 대가** (Adam 100회) | 간격 설계도 반복 수천 회에 품질이 시드 운에 좌우된다 | **Opt5 `research/`** — 정확한 수식 위에서 배치 Newton + 판정 목적 직접 연마. 판정 J(PSLL + 커플링) 8시드 평균 −13.552 를 **47~71회차**에 낸다. 다른 방법군은 857~10,317회차에 −13.04~−13.55 ([근거](Opt5_Surrogate/research/README.md)) |
 | 물리 모델 = **varFDTD** | 해석식의 소자인자가 실제와 어긋난다 | MODE 로그(`Opt3_Back_Forward/Resultants`)로 소자인자 보정을 적합한다. N=32로 적합하고 N=64/128 홀드아웃에서 R² 0.996이다. 비등간격 배열 검증은 `Opt5_Surrogate/mode_validation.py --spec` 이 랩 실행 명세를 준다 |
 
+## 현재 챔피언 — 회차 최소화 간격 설계
+
+포스터가 위상 캘리브레이션을 "반복 100회"로 평가했듯이, 간격 설계 챔피언도 **반복 회차**(목적함수를 배치로 한 번
+평가하는 순차 호출 수)를 주 지표로 삼는다. 목표는 특정 장비의 속도가 아니라, 병렬 연구 장비가 있으면 가장 적은
+반복으로 최고 수준에 닿는 알고리즘이다.
+
+| ±15° 5각, N = 32, 시드 8개 | J 평균 | 최악 | 반복 회차 |
+|---|---|---|---|
+| **`m_round`** (Adam 탐색 → 배치 saddle-free Newton → 정확 minimax SLP) | **−13.552** | **−13.521** | **71** (융합 47) |
+| 다른 방법군 최고 (진화·베이신 호핑·학습 기반·목적함수 재조정) | −13.39 ~ −13.55 | −13.31 ~ −13.51 | 857 ~ 10,317 |
+| 이전 ① 챔피언 레시피 | −12.45 | −11.89 | — |
+
+J = 판정 θ-격자의 worst-angle PSLL + 커플링 페널티 (낮을수록 좋음). 최고점 조건·이점·한계는
+[`Opt5_Surrogate/research/README.md`](Opt5_Surrogate/research/README.md) 에 정리했다.
+
 ## 실행
 
 **Opt4 / Opt5** (CPU로 동작, Opt5 학습은 Apple MPS 선택): Python 3.10, `torch numpy pandas matplotlib pytest`
@@ -80,7 +97,8 @@ python main_design_multiangle.py       # 다각도 간격 설계
 python main_calibration.py             # 간격 동결 + 위상 캘리브레이션
 
 cd ../Opt5_Surrogate
-python -m pytest test_opt5.py          # 회귀 게이트 9종
+python -m pytest test_opt5.py          # 회귀 게이트 10종
+python research/harness.py run m_round --tier B2 --lanes mps,cpu,cpu --tag champion   # 현재 챔피언 (시드 8개)
 python champion_track1.py              # ① 수식 직접 간격 설계 (~6 s)
 python train.py --arch mlp --device auto --tag mlp_full   # ② 전제: 서러게이트 학습 (~33 min)
 python champion_tandem.py --ckpt checkpoints/mlp_full.pt
@@ -95,7 +113,8 @@ python evaluate_champions.py           # 4축 판정
 ## 한계
 
 - 소자인자 보정은 d = 3 µm 등간격 MODE 로그로 적합했다. 비등간격 설계에서의 정확도는 varFDTD를 새로 실행하기 전까지 확인되지 않았다.
-- 포스터와 후속 연구의 모든 수치는 시뮬레이션 기준이다. 제조·구동 오차(위치 σ 50 nm, 위상 σ 5°)를 넣으면 PSLL이 약 1.5 dB 나빠진다 (`Opt5_Surrogate` README).
+- 포스터와 후속 연구의 모든 수치는 시뮬레이션 기준이다. 제조·구동 오차(위치 σ 50 nm, 위상 σ 5°)를 넣으면 PSLL이 나빠진다 — 현재 챔피언 설계는 공칭 −14.01 dB 에서 p90 −11.46 dB (이전 챔피언들보다는 강건).
+- 현재 챔피언의 회차 우위는 한 회차 안의 대량 병렬 평가(후보 1024개의 헤시안)를 전제한다. 평가량 자체는 다른 방법보다 많고, 판정에 없는 ISL(총 사이드로브 에너지)은 이전 챔피언보다 나쁘다.
 
 ## 감사의 글
 
