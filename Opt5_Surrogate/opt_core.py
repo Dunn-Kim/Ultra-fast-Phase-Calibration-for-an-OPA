@@ -25,6 +25,12 @@ def resolve_device(name):
     return name
 
 
+def sync(dev):
+    # MPS 는 비동기 — 시간 측정 전에 큐를 비워야 실제 소요가 잡힌다
+    if str(dev).startswith('mps'):
+        th.mps.synchronize()
+
+
 # ---------- 프로토콜 / 필드 조립 ----------
 
 def u0_vector(dtype=th.float64, angles_deg=None):
@@ -191,6 +197,7 @@ def run_gradient(eval_I, params_dtype, dev, oracle, restarts, epochs, lr,
         opt.step()
         opt.zero_grad(set_to_none=True)
         n_eval += R_eval * A
+        sync(dev)
         t_train += time.perf_counter() - t0
         if trace_fn is not None and trace_every \
                 and (ep % trace_every == 0 or ep == epochs - 1):
@@ -271,6 +278,73 @@ def polish_lbfgs(oracle, s0, jc, u0_vec, beta=3.0, max_iter=150, w_isl=0.0,
     with th.no_grad():
         d = logit_to_d(s, jc).double()
     return d, elapsed, n_closure * R * max(1, robust_k) * A
+
+
+# ---------- v-도메인 엔진 (조향해 φ* 전용, GPU 친화) ----------
+#
+# φ = φ*(u0) 이면 AF_a(u) = W(u − u0_a),  W(v) = Σ_n exp(j·k·x_n·v)  — 각도마다 다시 풀 필요가 없다.
+# 균등 v 격자 v_m = v0 + (p·Q + q)·dv 에서 W[p, q] = Σ_n exp(jkx_n(v0+pQdv))·exp(jkx_n·q·dv)
+#   → (R,P,N)@(R,N,Q) 배치 행렬곱. 원소별 (R·A, G, N) 텐서 대비 메모리 병목이 사라진다.
+# 격자는 균등 u (θ-균등 판정 격자와 다름) — 탐색·연마용. 최종 판정은 formula_hard_per_restart.
+
+DV_FINE = math.sin(math.radians(0.1))      # θ-격자 정면 간격과 동일
+
+
+class VDomain:
+    def __init__(self, oracle, u0_vec, dv=DV_FINE, device='cpu', dtype=th.float32):
+        self.jc, self.k = oracle.jcfg, oracle.k
+        half = int(math.ceil((1.0 + float(u0_vec.abs().max())) / dv))
+        self.Q = int(math.ceil(math.sqrt(2 * half + 1)))
+        self.P = int(math.ceil((2 * half + 1) / self.Q))
+        v = (th.arange(self.P * self.Q, dtype=th.float64) - half) * dv   # v=0 이 격자점
+        u = v.reshape(1, -1) + u0_vec.double().reshape(-1, 1)           # (A, M)
+        valid = u.abs() <= 1.0
+        ef2 = oracle.opa.element_factor_amp(u.clamp(-1.0, 1.0)) ** 2
+        self.ef2 = (th.where(valid, ef2, th.zeros_like(ef2))
+                    / self.jc.line_N ** 2).to(device, dtype)
+        self.valid = valid.to(device)
+        self.v = v.to(device, dtype)
+        self.vp = (v[0] + th.arange(self.P, dtype=th.float64) * self.Q * dv).to(device, dtype)
+        self.vq = (th.arange(self.Q, dtype=th.float64) * dv).to(device, dtype)
+
+    def W2(self, d):
+        # d(R,N-1) → |W(v)|² (R, M)
+        kx = F.pad(d.cumsum(-1), (1, 0)).unsqueeze(2) * self.k          # (R,N,1)
+        ap, bq = kx * self.vp, kx * self.vq
+        Ar, Ai = th.cos(ap).transpose(1, 2), th.sin(ap).transpose(1, 2)
+        Br, Bi = th.cos(bq), th.sin(bq)
+        Wr, Wi = Ar @ Br - Ai @ Bi, Ar @ Bi + Ai @ Br
+        return (Wr ** 2 + Wi ** 2).reshape(d.shape[0], -1)
+
+    def parts(self, d):
+        # → I(R,A,M), 메인로브 가드 마스크, 사이드로브 마스크
+        I = self.ef2.unsqueeze(0) * self.W2(d).unsqueeze(1)
+        guard = (self.v.reshape(1, 1, -1).abs()
+                 < (2.0 * self.jc.wavelength / d.sum(-1)).reshape(-1, 1, 1))
+        return I, guard, self.valid.unsqueeze(0) & ~guard
+
+    def soft_loss(self, d, beta, w_isl=0.0, gamma=1.0, eps=1e-12):
+        # 재시작별 soft worst-angle PSLL [+ w_isl·각도평균 ISL] (R,)
+        I, guard, side = self.parts(d)
+        main = th.where(guard, I, th.zeros_like(I)).amax(-1, keepdim=True)
+        sdb = 10.0 * th.log10(th.where(side, I, th.full_like(I, eps)).clamp(min=eps)
+                              / main.clamp(min=eps))
+        per = th.logsumexp(beta * sdb, dim=-1) / beta
+        loss = th.logsumexp(gamma * per, dim=-1) / gamma
+        if w_isl:
+            e_main = th.where(guard, I, th.zeros_like(I)).sum(-1)
+            e_side = th.where(side, I, th.zeros_like(I)).sum(-1)
+            loss = loss + w_isl * (10.0 * th.log10(e_side.clamp(min=eps)
+                                                   / e_main.clamp(min=eps))).mean(-1)
+        return loss
+
+    @th.no_grad()
+    def hard_psll(self, d, eps=1e-12):
+        # v-격자 hard worst-angle PSLL [dB] (R,) — 순위용 근사 (판정은 θ-격자)
+        I, guard, side = self.parts(d)
+        main = th.where(guard, I, th.zeros_like(I)).amax(-1)
+        sd = th.where(side, I, th.zeros_like(I)).amax(-1)
+        return (10.0 * th.log10(sd.clamp(min=eps) / main.clamp(min=eps))).amax(-1)
 
 
 # ---------- 동결 로더 ----------
