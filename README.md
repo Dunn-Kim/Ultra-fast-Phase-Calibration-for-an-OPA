@@ -86,6 +86,28 @@ Photonics Conference 2022 포스터([`PC2022_poster_DH_v5_final.pdf`](PC2022_pos
 J = 판정 θ-격자의 worst-angle PSLL + 커플링 페널티 (낮을수록 좋음). 최고점 조건·이점·한계는
 [`Opt5_Surrogate/research/README.md`](Opt5_Surrogate/research/README.md) 에 정리했다.
 
+**챔피언 설계** — [`Opt5_Surrogate/results/research/final_spacing_champion_round.csv`](Opt5_Surrogate/results/research/final_spacing_champion_round.csv) (31개 간격, µm)
+
+| 지표 | 값 |
+|---|---|
+| worst-angle PSLL (±15° 5각) | −14.01 dB |
+| J (PSLL + 커플링 페널티) | −13.58 |
+| 제조·구동 오차 하 PSLL p90 (위치 σ 50 nm, 위상 σ 5°) | −11.46 dB |
+| ISL (가드밴드 밖 총에너지 / 메인로브) | 1.53 dB |
+| 최소 간격 | 2.233 µm |
+
+## 성과 기록
+
+단계마다 사양과 물리 모델이 달라 수치를 직접 비교할 수는 없다. 같은 규약끼리만 비교한다.
+
+| 시점 | 단계 | 성과 | 규약 |
+|---|---|---|---|
+| 2022-12 | 포스터 (Opt1~3) | Adam 위상 캘리브레이션 — 100회 반복 안에 주엽 강도가 이상치의 92% 이상 (N = 32/64/128) | MODE varFDTD, 초기 위상 오차 U(0, 2π) |
+| 2026-07 | Opt4 간격·위상 공동 설계 | 등간격 PSLL −1.65 → −15.46 dB (단일각). ±30° 다각도 worst −11.75 / −14.76 / −17.41 dB (N = 32/64/128) | sinc 소자인자 (MODE 적합 이전 — 실제보다 약 1.6 dB 낙관) |
+| 2026-07 | Opt4 고속 캘리브레이션 | 카메라 프레임 5장으로 주엽 98% 이상 복원 (REV 방식은 155장) | 시뮬레이션 |
+| 2026-07 | Opt5 서러게이트 2단계 최적화 | ±15° PSLL: GA −11.17 dB, ① 수식 직접 −13.35 dB / 6.3 s, ② tandem −13.55 dB / 사양당 0.38 s | MODE 적합 소자인자, 단일 시드 |
+| 2026-10 | **회차 최소화 챔피언 `m_round`** | **J 8시드 평균 −13.552 (최악 −13.521) / 47~71회차**. 같은 판정으로 재측정한 이전 ① 레시피는 −12.45, 다른 방법군은 857~10,317회차에 −13.04 ~ −13.55 | MODE 적합 소자인자, J = PSLL + 커플링, 시드 8개 |
+
 ## 실행
 
 **Opt4 / Opt5** (CPU로 동작, Opt5 학습은 Apple MPS 선택): Python 3.10, `torch numpy pandas matplotlib pytest`

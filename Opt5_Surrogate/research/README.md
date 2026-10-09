@@ -131,5 +131,5 @@ python research/harness.py board
 | `../opt_core.py` | `VDomain` (v-도메인 정확 엔진), `sync` (MPS 시간 측정) |
 | `../results/research/` | 챔피언(`champion`, `champion_fused`)·회차 프론티어(`front_*`) 결과, `comparison.json`, 챔피언 설계 CSV |
 
-미채택 방법군 코드·학습 체크포인트·원시 실행 로그는 커밋하지 않고 `git stash` 에 보관했다
-(`git stash list` → "research/champion: non-champion methods ...").
+미채택 방법군의 코드·학습 체크포인트·원시 실행 로그는 보존하지 않는다 (2026-10-09 정리).
+비교 수치(방법별 J·회차·평가량과 원 실행 태그)는 `comparison.json` 에만 남아 있다.
